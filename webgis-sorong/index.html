@@ -402,22 +402,25 @@
 
   // ── LOAD DATA — 1 FILE CAMPUR, auto-split by OSM tag ──
   // Letakkan file GeoJSON kamu di:
-  //   Pos_Polisi_dan_Militer.geojson   (hasil export HOT OSM, boleh campur)
+  //   data/sorong.geojson   (hasil export HOT OSM, boleh campur)
 
   function isPolice(props) {
     return (
       (props.amenity && props.amenity.toLowerCase().includes('police')) ||
-      (props.name && /poli(s|si)/i.test(props.name)) ||
+      (props.name && /(poli(s|si|sek|res|da|sta)|polsek|polres|polda|polresta|polsesta)/i.test(props.name)) ||
       (props.office && props.office.toLowerCase().includes('police'))
     );
   }
 
   function isMilitary(props) {
+    // polisi dicek duluan di atas, jadi polsek tidak akan masuk sini
     return (
-      props.military !== undefined ||
-      (props.landuse && props.landuse.toLowerCase().includes('military')) ||
-      (props.name && /(tni|militer|koramil|kodim|korem|kodam|barak|batalyon|markas)/i.test(props.name)) ||
-      (props.amenity && props.amenity.toLowerCase().includes('military'))
+      !isPolice(props) && (
+        props.military !== undefined ||
+        (props.landuse && props.landuse.toLowerCase().includes('military')) ||
+        (props.name && /(tni|militer|koramil|kodim|korem|kodam|barak|batalyon|markas)/i.test(props.name)) ||
+        (props.amenity && props.amenity.toLowerCase().includes('military'))
+      )
     );
   }
 
@@ -453,7 +456,7 @@
     })
     .catch(err => {
       console.error(err);
-      showError('Gagal memuat <b>Pos_Polisi_dan_Militer.geojson</b>. Pastikan file ada di folder <code>data/</code>.');
+      showError('Gagal memuat <b>data/sorong.geojson</b>. Pastikan file ada di folder <code>data/</code>.');
       document.getElementById('loading').classList.add('hidden');
     });
 </script>
