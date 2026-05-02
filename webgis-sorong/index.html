@@ -405,24 +405,31 @@
   //   data/sorong.geojson   (hasil export HOT OSM, boleh campur)
 
   function isPolice(props) {
-    return (
-      (props.amenity && props.amenity.toLowerCase().includes('police')) ||
-      (props.name && /(poli(s|si|sek|res|da|sta)|polsek|polres|polda|polresta|polsesta)/i.test(props.name)) ||
-      (props.office && props.office.toLowerCase().includes('police'))
-    );
-  }
+  const name = (props.name || '').toLowerCase();
+  const amenity = (props.amenity || '').toLowerCase();
+  const office = (props.office || '').toLowerCase();
 
-  function isMilitary(props) {
-    // polisi dicek duluan di atas, jadi polsek tidak akan masuk sini
-    return (
-      !isPolice(props) && (
-        props.military !== undefined ||
-        (props.landuse && props.landuse.toLowerCase().includes('military')) ||
-        (props.name && /(tni|militer|koramil|kodim|korem|kodam|barak|batalyon|markas)/i.test(props.name)) ||
-        (props.amenity && props.amenity.toLowerCase().includes('military'))
-      )
-    );
-  }
+  // exclude dulu yang militer
+  if (/(militer|tni|angkatan|koramil|kodim|korem|kodam|barak|batalyon|markas|navy|armed)/i.test(name)) return false;
+
+  return (
+    amenity.includes('police') ||
+    office.includes('police') ||
+    /(polsek|polres|polda|polresta|polsesta|polisi(?! militer)|kepolisian)/i.test(name)
+  );
+}
+
+function isMilitary(props) {
+  const name = (props.name || '').toLowerCase();
+  const amenity = (props.amenity || '').toLowerCase();
+
+  return (
+    props.military !== undefined ||
+    (props.landuse || '').toLowerCase().includes('military') ||
+    /(tni|militer|polisi militer|koramil|kodim|korem|kodam|barak|batalyon|markas|angkatan laut|angkatan darat|angkatan udara|lanal|lanud|korem|pom |provost)/i.test(name) ||
+    amenity.includes('military')
+  );
+}
 
   fetch('data/Pos_Polisi_dan_Militer.geojson')
     .then(r => {
