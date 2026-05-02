@@ -393,65 +393,69 @@
     `;
   }
 
-  // ── GEOJSON LOADER ────────────────────────────────────
-  let countPolice   = 0;
-  let countMilitary = 0;
-
+  // ── HELPERS ───────────────────────────────────────────
   function showError(msg) {
     const box = document.getElementById('error-box');
     box.style.display = 'block';
     box.innerHTML += `<div>⚠ ${msg}</div>`;
   }
 
-  function loadGeoJSON(path, icon, type, onDone) {
-    fetch(path)
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status} — ${path}`);
-        return r.json();
-      })
-      .then(data => {
-        const layer = L.geoJSON(data, {
-          pointToLayer: (feature, latlng) => L.marker(latlng, { icon }),
-          onEachFeature: (feature, layer) => {
-            const p = feature.properties || {};
-            layer.bindPopup(buildPopup(p, type), { maxWidth: 260 });
-          }
-        }).addTo(map);
-
-        const count = data.features ? data.features.length : 0;
-        onDone(count);
-      })
-      .catch(err => {
-        console.error(err);
-        showError(`Gagal memuat <b>${path}</b>. Pastikan file ada di folder <code>data/</code>.`);
-        onDone(0);
-      });
-  }
-
-  // ── LOAD DATA — nama file HARUS sama persis ───────────
+  // ── LOAD DATA — 1 FILE CAMPUR, auto-split by OSM tag ──
   // Letakkan file GeoJSON kamu di:
-  //   data/pos_polisi_sorong.geojson
-  //   data/pos_militer_sorong.geojson
+  //   data/sorong.geojson   (hasil export HOT OSM, boleh campur)
 
-  let loaded = 0;
-  function checkAllLoaded() {
-    loaded++;
-    if (loaded === 2) {
-      document.getElementById('loading').classList.add('hidden');
-    }
+  function isPolice(props) {
+    return (
+      (props.amenity && props.amenity.toLowerCase().includes('police')) ||
+      (props.name && /poli(s|si)/i.test(props.name)) ||
+      (props.office && props.office.toLowerCase().includes('police'))
+    );
   }
 
-  loadGeoJSON('data/pos_polisi_sorong.geojson', iconPolice, 'police', (n) => {
-    countPolice = n;
-    document.getElementById('count-police').textContent = n;
-    checkAllLoaded();
-  });
+  function isMilitary(props) {
+    return (
+      props.military !== undefined ||
+      (props.landuse && props.landuse.toLowerCase().includes('military')) ||
+      (props.name && /(tni|militer|koramil|kodim|korem|kodam|barak|batalyon|markas)/i.test(props.name)) ||
+      (props.amenity && props.amenity.toLowerCase().includes('military'))
+    );
+  }
 
-  loadGeoJSON('data/pos_militer_sorong.geojson', iconMilitary, 'military', (n) => {
-    countMilitary = n;
-    document.getElementById('count-military').textContent = n;
-    checkAllLoaded();
-  });
+  fetch('data/sorong.geojson')
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then(data => {
+      let nPolice = 0, nMilitary = 0;
+
+      L.geoJSON(data, {
+        pointToLayer: (feature, latlng) => {
+          const p = feature.properties || {};
+          if (isPolice(p))    return L.marker(latlng, { icon: iconPolice });
+          if (isMilitary(p))  return L.marker(latlng, { icon: iconMilitary });
+          // fallback: tampilkan sebagai polisi jika tidak terdeteksi
+          return L.marker(latlng, { icon: iconPolice });
+        },
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties || {};
+          const type = isMilitary(p) ? 'military' : 'police';
+          layer.bindPopup(buildPopup(p, type), { maxWidth: 260 });
+
+          if (isMilitary(p)) nMilitary++;
+          else nPolice++;
+        }
+      }).addTo(map);
+
+      document.getElementById('count-police').textContent   = nPolice;
+      document.getElementById('count-military').textContent = nMilitary;
+      document.getElementById('loading').classList.add('hidden');
+    })
+    .catch(err => {
+      console.error(err);
+      showError('Gagal memuat <b>data/sorong.geojson</b>. Pastikan file ada di folder <code>data/</code>.');
+      document.getElementById('loading').classList.add('hidden');
+    });
 </script>
 </body>
 </html>
