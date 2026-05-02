@@ -409,13 +409,10 @@
   const amenity = (props.amenity || '').toLowerCase();
   const office = (props.office || '').toLowerCase();
 
-  // exclude dulu yang militer
-  if (/(militer|tni|angkatan|koramil|kodim|korem|kodam|barak|batalyon|markas|navy|armed)/i.test(name)) return false;
-
   return (
     amenity.includes('police') ||
     office.includes('police') ||
-    /(polsek|polres|polda|polresta|polsesta|polisi(?! militer)|kepolisian)/i.test(name)
+    /\bpolsek\b|\bpolres\b|\bpolda\b|\bpolresta\b|\bkepolisian\b/.test(name)
   );
 }
 
@@ -426,7 +423,7 @@ function isMilitary(props) {
   return (
     props.military !== undefined ||
     (props.landuse || '').toLowerCase().includes('military') ||
-    /(tni|militer|polisi militer|koramil|kodim|korem|kodam|barak|batalyon|markas|angkatan laut|angkatan darat|angkatan udara|lanal|lanud|korem|pom |provost)/i.test(name) ||
+    /\btni\b|militer|koramil|kodim|korem|kodam|barak|batalyon|markas|angkatan laut|angkatan darat|angkatan udara|lanal|lanud|\bpom\b|provost/.test(name) ||
     amenity.includes('military')
   );
 }
