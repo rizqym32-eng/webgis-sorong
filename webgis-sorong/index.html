@@ -313,6 +313,33 @@
     function getPlaceAddress(props) {
       return props["addr:full"] || props["addr:street"] || props.address || "-";
     }
+    function getGeometryCenter(geometry) {
+      if (!geometry || !geometry.type || !geometry.coordinates) return null;
+      const type = geometry.type;
+      const coords = geometry.coordinates;
+      if (type === "Point" && Array.isArray(coords) && coords.length >= 2) {
+        return [coords[1], coords[0]];
+      }
+      let ring = null;
+      if (type === "Polygon" && Array.isArray(coords[0])) {
+        ring = coords[0];
+      } else if (type === "MultiPolygon" && Array.isArray(coords[0]) && Array.isArray(coords[0][0])) {
+        ring = coords[0][0];
+      }
+      if (!ring || ring.length === 0) return null;
+      let sumLat = 0;
+      let sumLng = 0;
+      let valid = 0;
+      ring.forEach((pt) => {
+        if (Array.isArray(pt) && pt.length >= 2) {
+          sumLng += Number(pt[0]);
+          sumLat += Number(pt[1]);
+          valid += 1;
+        }
+      });
+      if (!valid) return null;
+      return [sumLat / valid, sumLng / valid];
+    }
 
     function updateStats(filtered) {
       const policeCount = filtered.filter((p) => p.type === "police").length;
@@ -472,13 +499,14 @@
       if (!resp.ok) throw new Error("HTTP " + resp.status);
       const data = await resp.json();
       allPlaces = (data.features || [])
-        .filter((f) => f.geometry && f.geometry.type === "Point" && f.geometry.coordinates)
         .map((f, idx) => {
           const props = f.properties || {};
+          const coords = getGeometryCenter(f.geometry);
+          if (!coords) return null;
           const type = getPlaceType(props);
-          const coords = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
           return { id: idx, name: getPlaceName(props, idx), type, address: getPlaceAddress(props), coords, props, marker: null };
-        });
+        })
+        .filter(Boolean);
       renderMarkersAndList();
       document.getElementById("loading").classList.add("hidden");
     }
