@@ -177,6 +177,28 @@
       transform: translateY(-1px);
       box-shadow: 0 6px 15px rgba(0, 0, 0, 0.18);
     }
+    .volume-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      background: var(--button-bg);
+      border-radius: 8px;
+      padding: 5px 8px;
+      color: var(--text);
+      font-size: 11px;
+    }
+    #volume-slider {
+      width: 84px;
+      accent-color: #f59e0b;
+      cursor: pointer;
+    }
+    #volume-label {
+      min-width: 34px;
+      text-align: right;
+      color: var(--muted);
+      font-weight: 600;
+    }
     .layout {
       position: fixed; top: 58px; left: 0; right: 0; bottom: 0;
       display: grid; grid-template-columns: 330px 1fr;
@@ -307,6 +329,11 @@
     <div class="header-right">
       <button class="gps-btn" id="gps-btn">📡 Gunakan GPS Saya</button>
       <button class="music-btn" id="music-btn">🔊 Musik: ON</button>
+      <div class="volume-wrap">
+        <span>🔉</span>
+        <input id="volume-slider" type="range" min="0" max="100" value="35" />
+        <span id="volume-label">35%</span>
+      </div>
       <button class="theme-btn" id="theme-btn">🌗 Light Mode</button>
       <span>Papua Barat Daya</span>
     </div>
@@ -383,6 +410,8 @@
     const routeModeSelect = document.getElementById("route-mode");
     const musicBtn = document.getElementById("music-btn");
     const bgMusic = document.getElementById("bg-music");
+    const volumeSlider = document.getElementById("volume-slider");
+    const volumeLabel = document.getElementById("volume-label");
     const welcomeOverlay = document.getElementById("welcome-overlay");
     const skipIntroBtn = document.getElementById("skip-intro-btn");
 
@@ -392,6 +421,7 @@
     let selectedPlace = null;
     let allPlaces = [];
     let isMusicOn = true;
+    let currentVolume = 0.35;
     const markerLayer = L.layerGroup().addTo(map);
 
     function makeIcon(color, label) {
@@ -557,9 +587,14 @@
     function updateMusicButton() {
       musicBtn.textContent = isMusicOn ? "🔊 Musik: ON" : "🔈 Musik: OFF";
     }
+    function applyVolumeUI() {
+      const pct = Math.round(currentVolume * 100);
+      volumeSlider.value = String(pct);
+      volumeLabel.textContent = `${pct}%`;
+    }
     function tryPlayMusic() {
       if (!isMusicOn) return;
-      bgMusic.volume = 0.35;
+      bgMusic.volume = currentVolume;
       bgMusic.play().catch(() => {
         musicBtn.textContent = "▶ Klik untuk putar musik";
       });
@@ -581,6 +616,13 @@
         return;
       }
       setMusicEnabled(!isMusicOn);
+    });
+    volumeSlider.addEventListener("input", () => {
+      const v = Number(volumeSlider.value) / 100;
+      currentVolume = Number.isFinite(v) ? v : 0.35;
+      bgMusic.volume = currentVolume;
+      applyVolumeUI();
+      localStorage.setItem("webgis_music_volume", String(currentVolume));
     });
     document.addEventListener("pointerdown", tryPlayMusic, { once: true });
     if (skipIntroBtn) {
@@ -707,6 +749,11 @@
         }
         const savedTheme = localStorage.getItem("webgis_theme") || "dark";
         isMusicOn = localStorage.getItem("webgis_music_on") !== "0";
+        const savedVolume = Number(localStorage.getItem("webgis_music_volume"));
+        if (Number.isFinite(savedVolume) && savedVolume >= 0 && savedVolume <= 1) {
+          currentVolume = savedVolume;
+        }
+        applyVolumeUI();
         updateMusicButton();
         tryPlayMusic();
         setTheme(savedTheme);
