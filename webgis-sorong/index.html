@@ -271,6 +271,11 @@
     function normalizeText(v) {
       return (v || "").toString().trim().toLowerCase();
     }
+    function hasMeaningfulValue(v) {
+      if (v === null || v === undefined) return false;
+      const t = v.toString().trim().toLowerCase();
+      return t !== "" && t !== "null" && t !== "undefined" && t !== "none";
+    }
 
     function isMilitary(props) {
       const name = normalizeText(props.name);
@@ -278,8 +283,8 @@
       const office = normalizeText(props.office);
       const militaryTag = normalizeText(props.military);
       return (
-        props.military !== undefined ||
-        militaryTag.length > 0 ||
+        hasMeaningfulValue(props.military) ||
+        (militaryTag.length > 0 && militaryTag !== "null") ||
         normalizeText(props.landuse).includes("military") ||
         amenity.includes("military") ||
         office.includes("military") ||
