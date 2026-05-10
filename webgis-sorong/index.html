@@ -115,7 +115,17 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
     .action-title { font-weight: 600; margin-bottom: 9px; font-size: 14px; }
-    .action-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .route-mode-select {
+      width: 100%;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+      background: var(--button-bg);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 7px;
+      font-size: 12px;
+    }
+    .action-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
     .action-buttons button {
       border: 1px solid var(--border); background: var(--button-bg); color: var(--text);
       border-radius: 8px; padding: 7px 6px; cursor: pointer; font-size: 12px;
@@ -196,10 +206,18 @@
       </div>
       <div id="action-panel">
         <div class="action-title" id="action-title">Pilih Aksi</div>
+        <select id="route-mode" class="route-mode-select">
+          <option value="driving">Mobil</option>
+          <option value="motorcycle">Motor</option>
+          <option value="walking">Jalan Kaki</option>
+          <option value="train">Kereta</option>
+          <option value="plane">Pesawat</option>
+        </select>
         <div class="action-buttons">
           <button id="btn-detail">Detail</button>
           <button id="btn-focus">Fokus</button>
           <button id="btn-route">Rute</button>
+          <button id="btn-cancel-route">Cancel Rute</button>
         </div>
       </div>
     </section>
@@ -225,6 +243,7 @@
     const listMetaEl = document.getElementById("list-meta");
     const actionPanel = document.getElementById("action-panel");
     const actionTitle = document.getElementById("action-title");
+    const routeModeSelect = document.getElementById("route-mode");
 
     let currentLocation = null;
     let userMarker = null;
@@ -253,23 +272,35 @@
       return (v || "").toString().trim().toLowerCase();
     }
 
-    function isPolice(props) {
+    function isMilitary(props) {
+      const name = normalizeText(props.name);
+      const amenity = normalizeText(props.amenity);
+      const office = normalizeText(props.office);
+      const militaryTag = normalizeText(props.military);
       return (
-        (props.amenity && normalizeText(props.amenity).includes("police")) ||
-        (props.office && normalizeText(props.office).includes("police")) ||
-        (props.name && /(polsek|polres|polda|polisi|polresta)/i.test(props.name))
+        props.military !== undefined ||
+        militaryTag.length > 0 ||
+        normalizeText(props.landuse).includes("military") ||
+        amenity.includes("military") ||
+        office.includes("military") ||
+        /(tni|militer|rindam|koramil|kodim|korem|kodam|yonif|batalyon|lanud|lanal|markas|pomdam|denpom|puspom|polisi militer|pm\b)/i.test(name)
       );
     }
-    function isMilitary(props) {
+    function isPolice(props) {
+      const name = normalizeText(props.name);
+      const amenity = normalizeText(props.amenity);
+      const office = normalizeText(props.office);
+      if (/(polisi militer|pomdam|denpom|puspom|pm\b)/i.test(name)) return false;
       return (
-        !isPolice(props) &&
-        (
-          props.military !== undefined ||
-          (props.landuse && normalizeText(props.landuse).includes("military")) ||
-          (props.amenity && normalizeText(props.amenity).includes("military")) ||
-          (props.name && /(tni|militer|koramil|kodim|korem|kodam|markas)/i.test(props.name))
-        )
+        amenity.includes("police") ||
+        office.includes("police") ||
+        /(polsek|polres|polda|polresta|polsubsektor|polisi(?! militer))/i.test(name)
       );
+    }
+    function getPlaceType(props) {
+      if (isMilitary(props)) return "military";
+      if (isPolice(props)) return "police";
+      return "police";
     }
     function getPlaceName(props, idx) {
       return props.name || props.amenity || props.military || "Tempat " + (idx + 1);
@@ -355,6 +386,12 @@
       }
       map.flyTo(currentLocation, 14, { duration: 0.8 });
     }
+    function clearRoute() {
+      if (routeLine) {
+        map.removeLayer(routeLine);
+        routeLine = null;
+      }
+    }
 
     document.getElementById("gps-btn").addEventListener("click", () => {
       if (!navigator.geolocation) {
@@ -368,25 +405,41 @@
       );
     });
 
-    async function drawRouteToPlace(place) {
+    function openGoogleRoute(lat1, lon1, lat2, lon2, mode) {
+      const modeMap = {
+        driving: "driving",
+        motorcycle: "driving",
+        walking: "walking",
+        train: "transit",
+        plane: "flying"
+      };
+      const travelmode = modeMap[mode] || "driving";
+      window.open(`https://www.google.com/maps/dir/?api=1&origin=${lat1},${lon1}&destination=${lat2},${lon2}&travelmode=${travelmode}`, "_blank");
+    }
+    async function drawRouteToPlace(place, mode) {
       if (!currentLocation) {
         showError("Lokasi Anda belum aktif. Klik tombol 'Gunakan GPS Saya' terlebih dulu.");
         return;
       }
       const [lat1, lon1] = currentLocation;
       const [lat2, lon2] = place.coords;
+      clearRoute();
+      if (mode === "train" || mode === "plane") {
+        openGoogleRoute(lat1, lon1, lat2, lon2, mode);
+        return;
+      }
       try {
-        const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
+        const osrmProfile = mode === "walking" ? "foot" : "driving";
+        const url = `https://router.project-osrm.org/route/v1/${osrmProfile}/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
         const res = await fetch(url);
         if (!res.ok) throw new Error("route request failed");
         const json = await res.json();
         if (!json.routes || !json.routes[0]) throw new Error("route empty");
         const routeCoords = json.routes[0].geometry.coordinates.map((c) => [c[1], c[0]]);
-        if (routeLine) map.removeLayer(routeLine);
         routeLine = L.polyline(routeCoords, { color: "#f59e0b", weight: 5, opacity: 0.9 }).addTo(map);
         map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
       } catch (err) {
-        window.open(`https://www.google.com/maps/dir/?api=1&origin=${lat1},${lon1}&destination=${lat2},${lon2}`, "_blank");
+        openGoogleRoute(lat1, lon1, lat2, lon2, mode);
       }
     }
 
@@ -400,7 +453,10 @@
     });
     document.getElementById("btn-route").addEventListener("click", () => {
       if (!selectedPlace) return;
-      drawRouteToPlace(selectedPlace);
+      drawRouteToPlace(selectedPlace, routeModeSelect.value);
+    });
+    document.getElementById("btn-cancel-route").addEventListener("click", () => {
+      clearRoute();
     });
 
     typeFilter.addEventListener("change", renderMarkersAndList);
@@ -414,7 +470,7 @@
         .filter((f) => f.geometry && f.geometry.type === "Point" && f.geometry.coordinates)
         .map((f, idx) => {
           const props = f.properties || {};
-          const type = isMilitary(props) ? "military" : "police";
+          const type = getPlaceType(props);
           const coords = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
           return { id: idx, name: getPlaceName(props, idx), type, address: getPlaceAddress(props), coords, props, marker: null };
         });
