@@ -3,462 +3,440 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WebGIS Kota Sorong — Pos Polisi & Pos Militer</title>
-
-  <!-- Leaflet CSS -->
+  <title>WebGIS Kota Sorong - Pos Polisi & Pos Militer</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-  <!-- Leaflet JS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&family=Barlow:wght@300;400;500&display=swap');
-
+    @import url("https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&family=Barlow:wght@300;400;500;600&display=swap");
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --navy:   #0b1423;
-      --dark:   #111c2e;
-      --panel:  #162035;
+      --bg-main: #0b1423;
+      --bg-soft: #162035;
+      --bg-header: #111c2e;
       --border: #1e3058;
-      --police: #2563eb;
-      --police-light: #60a5fa;
-      --military: #16a34a;
-      --military-light: #4ade80;
+      --text: #e2e8f0;
+      --muted: #9caec8;
       --accent: #f59e0b;
-      --text:   #e2e8f0;
-      --muted:  #64748b;
+      --police: #2563eb;
+      --military: #16a34a;
+      --button-bg: #243352;
     }
-
-    html, body {
-      height: 100%;
-      font-family: 'Barlow', sans-serif;
-      background: var(--navy);
+    body.light {
+      --bg-main: #f3f6fb;
+      --bg-soft: #ffffff;
+      --bg-header: #ffffff;
+      --border: #cdd9ec;
+      --text: #13213b;
+      --muted: #4a5c7b;
+      --accent: #d97706;
+      --button-bg: #edf3ff;
+    }
+    html, body { height: 100%; font-family: "Barlow", sans-serif; background: var(--bg-main); color: var(--text); overflow: hidden; }
+    #welcome-overlay {
+      position: fixed; inset: 0; z-index: 3200;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+      background: radial-gradient(circle at center, rgba(37,99,235,0.18), transparent 58%), var(--bg-main);
+      animation: hideSplash 4.6s ease forwards;
+    }
+    #welcome-overlay h2 {
+      font-family: "Teko", sans-serif;
+      font-size: clamp(34px, 4.7vw, 62px);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
       color: var(--text);
-      overflow: hidden;
+      animation: welcomeIn 0.9s ease;
+      text-align: center;
+      padding: 0 12px;
     }
-
-    /* ── HEADER ── */
+    #welcome-overlay p { font-size: 14px; color: var(--muted); animation: welcomeIn 1.3s ease; }
+    @keyframes welcomeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes hideSplash { 0%, 74% { opacity: 1; } 100% { opacity: 0; pointer-events: none; } }
     #header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 1000;
-      background: linear-gradient(90deg, var(--navy) 0%, var(--dark) 100%);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      height: 56px;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 2100; height: 58px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 0 16px; background: linear-gradient(90deg, var(--bg-main), var(--bg-header)); border-bottom: 1px solid var(--border);
     }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
+    .header-left { display: flex; align-items: center; gap: 10px; }
     .header-badge {
-      background: var(--accent);
-      color: var(--navy);
-      font-family: 'Teko', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      padding: 3px 8px;
-      border-radius: 3px;
+      font-family: "Teko", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px;
+      background: var(--accent); color: #111; padding: 2px 8px; border-radius: 4px;
     }
-
-    #header h1 {
-      font-family: 'Teko', sans-serif;
-      font-size: 22px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      color: #fff;
+    #header h1 { font-family: "Teko", sans-serif; font-size: 22px; letter-spacing: 1px; font-weight: 600; }
+    #header h1 span { color: var(--accent); }
+    .header-right { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+    .theme-btn, .gps-btn, .filter-select {
+      border: 1px solid var(--border); background: var(--button-bg); color: var(--text);
+      border-radius: 7px; font-size: 12px; padding: 7px 10px;
     }
-
-    #header h1 span {
-      color: var(--accent);
+    .theme-btn, .gps-btn { cursor: pointer; font-weight: 600; }
+    .layout {
+      position: fixed; top: 58px; left: 0; right: 0; bottom: 0;
+      display: grid; grid-template-columns: 330px 1fr;
     }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 13px;
-      color: var(--muted);
+    #sidebar {
+      border-right: 1px solid var(--border); background: var(--bg-soft);
+      display: flex; flex-direction: column; gap: 10px; padding: 14px;
     }
-
-    .dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--military-light);
-      display: inline-block;
-      margin-right: 5px;
-      box-shadow: 0 0 6px var(--military-light);
-      animation: pulse 2s infinite;
+    .sidebar-title { font-family: "Teko", sans-serif; font-size: 22px; letter-spacing: 1px; }
+    .search-input {
+      width: 100%; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text);
+      padding: 10px 11px; font-size: 13px;
     }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+    #list-meta { font-size: 12px; color: var(--muted); }
+    #place-list {
+      list-style: none; overflow: auto; flex: 1; border: 1px solid var(--border);
+      border-radius: 10px; background: rgba(17, 28, 46, 0.1);
     }
-
-    /* ── MAP ── */
-    #map {
-      position: fixed;
-      top: 56px; bottom: 0; left: 0; right: 0;
-      z-index: 1;
+    .place-item {
+      border-bottom: 1px solid var(--border); padding: 10px;
+      display: flex; justify-content: space-between; gap: 8px; align-items: center;
     }
-
-    /* ── LEGEND / PANEL ── */
-    #legend {
-      position: fixed;
-      bottom: 24px;
-      right: 16px;
-      z-index: 1000;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 18px;
-      min-width: 200px;
-      backdrop-filter: blur(8px);
+    .place-item:last-child { border-bottom: none; }
+    .place-label { display: flex; flex-direction: column; gap: 2px; }
+    .place-name { font-weight: 600; font-size: 13px; color: var(--text); }
+    .place-type { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .place-go {
+      cursor: pointer; border: 1px solid var(--border); background: var(--button-bg);
+      color: var(--text); border-radius: 7px; padding: 5px 9px; font-size: 11px;
     }
-
-    #legend h3 {
-      font-family: 'Teko', sans-serif;
-      font-size: 15px;
-      letter-spacing: 2px;
-      color: var(--accent);
-      margin-bottom: 10px;
-      text-transform: uppercase;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-      font-size: 13px;
-      font-weight: 400;
-    }
-
-    .legend-icon {
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      border: 2px solid rgba(255,255,255,0.2);
-    }
-
-    .police-icon  { background: var(--police); box-shadow: 0 0 8px var(--police); }
-    .military-icon { background: var(--military); box-shadow: 0 0 8px var(--military); }
-
-    /* ── STAT BOX ── */
+    #map-wrap { position: relative; }
+    #map { position: absolute; inset: 0; }
     #stats {
-      position: fixed;
-      top: 70px;
-      right: 16px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      position: absolute; top: 14px; right: 14px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;
     }
-
     .stat-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 16px;
-      font-size: 12px;
-      color: var(--muted);
-      min-width: 160px;
+      min-width: 160px; border-radius: 8px; border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--bg-soft) 92%, transparent); padding: 9px 12px; font-size: 12px; color: var(--muted);
     }
-
-    .stat-card .stat-num {
-      font-family: 'Teko', sans-serif;
-      font-size: 26px;
-      font-weight: 700;
-      line-height: 1;
-      display: block;
+    .stat-num { display: block; font-family: "Teko", sans-serif; font-size: 26px; line-height: 1; color: var(--text); }
+    #action-panel {
+      position: absolute; left: 14px; bottom: 14px; z-index: 1100; width: 275px;
+      border-radius: 9px; border: 1px solid var(--border); background: var(--bg-soft); padding: 12px; display: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
-
-    .stat-card.police  .stat-num { color: var(--police-light); }
-    .stat-card.military .stat-num { color: var(--military-light); }
-
-    /* ── LOADING ── */
+    .action-title { font-weight: 600; margin-bottom: 9px; font-size: 14px; }
+    .action-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .action-buttons button {
+      border: 1px solid var(--border); background: var(--button-bg); color: var(--text);
+      border-radius: 8px; padding: 7px 6px; cursor: pointer; font-size: 12px;
+    }
     #loading {
-      position: fixed;
-      inset: 0;
-      z-index: 2000;
-      background: var(--navy);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      transition: opacity 0.5s;
+      position: fixed; inset: 0; z-index: 3000; background: color-mix(in srgb, var(--bg-main) 96%, transparent);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+      transition: opacity 0.4s ease;
     }
-
-    #loading.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    #loading p {
-      font-family: 'Teko', sans-serif;
-      font-size: 16px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      text-transform: uppercase;
-    }
-
-    /* ── LEAFLET POPUP OVERRIDE ── */
-    .leaflet-popup-content-wrapper {
-      background: var(--panel) !important;
-      border: 1px solid var(--border) !important;
-      border-radius: 8px !important;
-      color: var(--text) !important;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
-      font-family: 'Barlow', sans-serif !important;
-    }
-
-    .leaflet-popup-tip {
-      background: var(--panel) !important;
-    }
-
-    .leaflet-popup-content {
-      margin: 12px 16px !important;
-      font-size: 13px !important;
-      line-height: 1.6 !important;
-    }
-
-    .popup-title {
-      font-family: 'Teko', sans-serif;
-      font-size: 17px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      letter-spacing: 0.5px;
-    }
-
-    .popup-title.police  { color: var(--police-light); }
-    .popup-title.military { color: var(--military-light); }
-
-    .popup-row {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 2px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .popup-row strong {
-      color: var(--text);
-      min-width: 70px;
-    }
-
-    .leaflet-close-button-wrapper { display: none; }
-    .leaflet-popup-close-button { color: var(--muted) !important; }
-
-    /* ── ERROR BOX ── */
     .error-box {
-      position: fixed;
-      top: 70px;
-      left: 16px;
-      z-index: 1000;
-      background: #7f1d1d;
-      border: 1px solid #ef4444;
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-size: 12px;
-      max-width: 280px;
-      display: none;
+      position: fixed; top: 70px; left: 16px; z-index: 3100; display: none; max-width: 290px;
+      background: #7f1d1d; color: #fee2e2; border: 1px solid #ef4444; border-radius: 8px; padding: 10px 12px; font-size: 12px;
+    }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+      background: var(--bg-soft) !important; color: var(--text) !important; border: 1px solid var(--border) !important;
+    }
+    .leaflet-popup-content { margin: 10px 12px !important; font-size: 12px !important; }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      #sidebar {
+        position: absolute; z-index: 1500; top: 10px; left: 10px; width: min(92vw, 320px); max-height: 80vh;
+        border: 1px solid var(--border); border-radius: 11px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+      }
     }
   </style>
 </head>
-<body>
-
-<!-- Loading overlay -->
-<div id="loading">
-  <div class="spinner"></div>
-  <p>Memuat data peta...</p>
-</div>
-
-<!-- Header -->
-<div id="header">
-  <div class="header-left">
-    <span class="header-badge">WEBGIS</span>
-    <h1>Kota <span>Sorong</span> — Pos Keamanan</h1>
+<body class="dark">
+  <div id="welcome-overlay">
+    <h2>Selamat Datang di WebGIS Kota Sorong</h2>
+    <p>webgis by Koy</p>
   </div>
-  <div class="header-right">
-    <span><span class="dot"></span>OpenStreetMap</span>
-    <span>Papua Barat Daya, Indonesia</span>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Memuat data peta...</p>
   </div>
-</div>
 
-<!-- Map -->
-<div id="map"></div>
+  <header id="header">
+    <div class="header-left">
+      <span class="header-badge">WEBGIS</span>
+      <h1>Kota <span>Sorong</span> - Pos Keamanan</h1>
+    </div>
+    <div class="header-right">
+      <button class="gps-btn" id="gps-btn">Gunakan GPS Saya</button>
+      <button class="theme-btn" id="theme-btn">Light Mode</button>
+      <span>Papua Barat Daya</span>
+    </div>
+  </header>
 
-<!-- Stats -->
-<div id="stats">
-  <div class="stat-card police">
-    <span class="stat-num" id="count-police">—</span>
-    Pos Polisi
-  </div>
-  <div class="stat-card military">
-    <span class="stat-num" id="count-military">—</span>
-    Pos Militer
-  </div>
-</div>
+  <main class="layout">
+    <aside id="sidebar">
+      <h2 class="sidebar-title">Daftar Tempat</h2>
+      <select id="type-filter" class="filter-select">
+        <option value="all">Semua Tempat</option>
+        <option value="police">Pos Polisi</option>
+        <option value="military">Pos Militer</option>
+      </select>
+      <input id="search-input" class="search-input" type="text" placeholder="Cari berdasarkan nama..." />
+      <div id="list-meta">Memuat data...</div>
+      <ul id="place-list"></ul>
+    </aside>
 
-<!-- Legend -->
-<div id="legend">
-  <h3>Legenda</h3>
-  <div class="legend-item">
-    <div class="legend-icon police-icon"></div>
-    Pos Polisi
-  </div>
-  <div class="legend-item">
-    <div class="legend-icon military-icon"></div>
-    Pos Militer
-  </div>
-</div>
+    <section id="map-wrap">
+      <div id="map"></div>
+      <div id="stats">
+        <div class="stat-card">
+          <span class="stat-num" id="count-all">0</span>Total Tempat
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="count-police">0</span>Pos Polisi
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="count-military">0</span>Pos Militer
+        </div>
+      </div>
+      <div id="action-panel">
+        <div class="action-title" id="action-title">Pilih Aksi</div>
+        <div class="action-buttons">
+          <button id="btn-detail">Detail</button>
+          <button id="btn-focus">Fokus</button>
+          <button id="btn-route">Rute</button>
+        </div>
+      </div>
+    </section>
+  </main>
 
-<!-- Error box -->
-<div class="error-box" id="error-box"></div>
+  <div id="error-box" class="error-box"></div>
 
-<script>
-  // ── MAP INIT ──────────────────────────────────────────
-  const map = L.map('map', {
-    center: [-0.8617, 131.2520],   // Kota Sorong
-    zoom: 13,
-    zoomControl: true
-  });
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19
-  }).addTo(map);
-
-  // ── CUSTOM MARKER ICONS ───────────────────────────────
-  function makeIcon(color, label) {
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
-        <defs>
-          <filter id="sh">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.5)"/>
-          </filter>
-        </defs>
-        <path d="M16 0C7.16 0 0 7.16 0 16c0 10 16 24 16 24S32 26 32 16C32 7.16 24.84 0 16 0z"
-              fill="${color}" filter="url(#sh)"/>
-        <circle cx="16" cy="16" r="8" fill="white" opacity="0.9"/>
-        <text x="16" y="20.5" text-anchor="middle" font-family="Teko,sans-serif"
-              font-size="10" font-weight="700" fill="${color}">${label}</text>
-      </svg>`;
-    return L.divIcon({
-      html: svg,
-      iconSize: [32, 40],
-      iconAnchor: [16, 40],
-      popupAnchor: [0, -42],
-      className: ''
+  <script>
+    const map = L.map("map", { center: [-0.8617, 131.252], zoom: 13, zoomControl: true });
+    const tileLight = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19
     });
-  }
+    const tileDark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19
+    });
+    tileDark.addTo(map);
 
-  const iconPolice   = makeIcon('#2563eb', 'POL');
-  const iconMilitary = makeIcon('#16a34a', 'MIL');
+    const body = document.body;
+    const themeBtn = document.getElementById("theme-btn");
+    const typeFilter = document.getElementById("type-filter");
+    const searchInput = document.getElementById("search-input");
+    const placeListEl = document.getElementById("place-list");
+    const listMetaEl = document.getElementById("list-meta");
+    const actionPanel = document.getElementById("action-panel");
+    const actionTitle = document.getElementById("action-title");
 
-  // ── POPUP BUILDER ─────────────────────────────────────
-  function buildPopup(props, type) {
-    const cls   = type === 'police' ? 'police' : 'military';
-    const label = type === 'police' ? '🚔 Pos Polisi' : '🪖 Pos Militer';
-    const name  = props.name || props.amenity || props.military || 'Tidak diketahui';
-    const addr  = props['addr:full'] || props['addr:street'] || props.address || '—';
-    const op    = props.operator || '—';
-    const osm   = props.osm_id ? `<div class="popup-row"><strong>OSM ID</strong>${props.osm_id}</div>` : '';
+    let currentLocation = null;
+    let userMarker = null;
+    let routeLine = null;
+    let selectedPlace = null;
+    let allPlaces = [];
+    const markerLayer = L.layerGroup().addTo(map);
 
-    return `
-      <div class="popup-title ${cls}">${label}</div>
-      <div class="popup-row"><strong>Nama</strong>${name}</div>
-      <div class="popup-row"><strong>Alamat</strong>${addr}</div>
-      <div class="popup-row"><strong>Operator</strong>${op}</div>
-      ${osm}
-    `;
-  }
+    function makeIcon(color, label) {
+      return L.divIcon({
+        className: "",
+        html: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40"><path d="M16 0C7.16 0 0 7.16 0 16c0 10 16 24 16 24S32 26 32 16C32 7.16 24.84 0 16 0z" fill="${color}"/><circle cx="16" cy="16" r="8" fill="white"/><text x="16" y="20.5" text-anchor="middle" font-size="10" font-weight="700" fill="${color}" font-family="Teko,sans-serif">${label}</text></svg>`,
+        iconSize: [32, 40], iconAnchor: [16, 40], popupAnchor: [0, -35]
+      });
+    }
+    const iconPolice = makeIcon("#2563eb", "POL");
+    const iconMilitary = makeIcon("#16a34a", "MIL");
 
-  // ── HELPERS ───────────────────────────────────────────
-  function showError(msg) {
-    const box = document.getElementById('error-box');
-    box.style.display = 'block';
-    box.innerHTML += `<div>⚠ ${msg}</div>`;
-  }
+    function showError(msg) {
+      const box = document.getElementById("error-box");
+      box.style.display = "block";
+      box.innerHTML = msg;
+    }
 
-  // ── LOAD DATA — 1 FILE CAMPUR, auto-split by OSM tag ──
-  // Letakkan file GeoJSON kamu di:
-  //   data/sorong.geojson   (hasil export HOT OSM, boleh campur)
+    function normalizeText(v) {
+      return (v || "").toString().trim().toLowerCase();
+    }
 
-  function isPolice(props) {
-    return (
-      (props.amenity && props.amenity.toLowerCase().includes('police')) ||
-      (props.name && /(poli(s|si|sek|res|da|sta)|polsek|polres|polda|polresta|polsesta)/i.test(props.name)) ||
-      (props.office && props.office.toLowerCase().includes('police'))
-    );
-  }
+    function isPolice(props) {
+      return (
+        (props.amenity && normalizeText(props.amenity).includes("police")) ||
+        (props.office && normalizeText(props.office).includes("police")) ||
+        (props.name && /(polsek|polres|polda|polisi|polresta)/i.test(props.name))
+      );
+    }
+    function isMilitary(props) {
+      return (
+        !isPolice(props) &&
+        (
+          props.military !== undefined ||
+          (props.landuse && normalizeText(props.landuse).includes("military")) ||
+          (props.amenity && normalizeText(props.amenity).includes("military")) ||
+          (props.name && /(tni|militer|koramil|kodim|korem|kodam|markas)/i.test(props.name))
+        )
+      );
+    }
+    function getPlaceName(props, idx) {
+      return props.name || props.amenity || props.military || "Tempat " + (idx + 1);
+    }
+    function getPlaceAddress(props) {
+      return props["addr:full"] || props["addr:street"] || props.address || "-";
+    }
 
-  function isMilitary(props) {
-    // polisi dicek duluan di atas, jadi polsek tidak akan masuk sini
-    return (
-      !isPolice(props) && (
-        props.military !== undefined ||
-        (props.landuse && props.landuse.toLowerCase().includes('military')) ||
-        (props.name && /(tni|militer|koramil|kodim|korem|kodam|barak|batalyon|markas)/i.test(props.name)) ||
-        (props.amenity && props.amenity.toLowerCase().includes('military'))
-      )
-    );
-  }
+    function updateStats(filtered) {
+      const policeCount = filtered.filter((p) => p.type === "police").length;
+      const militaryCount = filtered.filter((p) => p.type === "military").length;
+      document.getElementById("count-all").textContent = String(filtered.length);
+      document.getElementById("count-police").textContent = String(policeCount);
+      document.getElementById("count-military").textContent = String(militaryCount);
+    }
 
-  fetch('data/Pos_Polisi_dan_Militer.geojson')
-    .then(r => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    })
-    .then(data => {
-      let nPolice = 0, nMilitary = 0;
+    function openActionPanel(place) {
+      selectedPlace = place;
+      actionTitle.textContent = place.name;
+      actionPanel.style.display = "block";
+    }
 
-      L.geoJSON(data, {
-        pointToLayer: (feature, latlng) => {
-          const p = feature.properties || {};
-          if (isPolice(p))    return L.marker(latlng, { icon: iconPolice });
-          if (isMilitary(p))  return L.marker(latlng, { icon: iconMilitary });
-          // fallback: tampilkan sebagai polisi jika tidak terdeteksi
-          return L.marker(latlng, { icon: iconPolice });
-        },
-        onEachFeature: (feature, layer) => {
-          const p = feature.properties || {};
-          const type = isMilitary(p) ? 'military' : 'police';
-          layer.bindPopup(buildPopup(p, type), { maxWidth: 260 });
+    function renderMarkersAndList() {
+      markerLayer.clearLayers();
+      placeListEl.innerHTML = "";
 
-          if (isMilitary(p)) nMilitary++;
-          else nPolice++;
+      const selectedType = typeFilter.value;
+      const keyword = normalizeText(searchInput.value);
+      const filtered = allPlaces.filter((p) => {
+        const typeOk = selectedType === "all" || p.type === selectedType;
+        const searchOk = !keyword || normalizeText(p.name).includes(keyword);
+        return typeOk && searchOk;
+      });
+
+      filtered.forEach((place) => {
+        const marker = L.marker(place.coords, { icon: place.type === "police" ? iconPolice : iconMilitary }).addTo(markerLayer);
+        marker.bindPopup(`<strong>${place.name}</strong><br>${place.type === "police" ? "Pos Polisi" : "Pos Militer"}<br>${place.address}`);
+        marker.on("click", () => openActionPanel(place));
+        place.marker = marker;
+
+        const li = document.createElement("li");
+        li.className = "place-item";
+        li.innerHTML = `<div class="place-label"><span class="place-name">${place.name}</span><span class="place-type">${place.type === "police" ? "Pos Polisi" : "Pos Militer"}</span></div><button class="place-go">Lihat</button>`;
+        li.querySelector(".place-go").addEventListener("click", () => {
+          map.flyTo(place.coords, 16, { duration: 0.8 });
+          marker.openPopup();
+          openActionPanel(place);
+        });
+        placeListEl.appendChild(li);
+      });
+
+      listMetaEl.textContent = filtered.length + " tempat tampil";
+      updateStats(filtered);
+    }
+
+    function setTheme(nextTheme) {
+      body.classList.toggle("light", nextTheme === "light");
+      if (nextTheme === "light") {
+        if (map.hasLayer(tileDark)) map.removeLayer(tileDark);
+        if (!map.hasLayer(tileLight)) tileLight.addTo(map);
+        themeBtn.textContent = "Dark Mode";
+      } else {
+        if (map.hasLayer(tileLight)) map.removeLayer(tileLight);
+        if (!map.hasLayer(tileDark)) tileDark.addTo(map);
+        themeBtn.textContent = "Light Mode";
+      }
+      localStorage.setItem("webgis_theme", nextTheme);
+    }
+
+    themeBtn.addEventListener("click", () => {
+      const nowLight = body.classList.contains("light");
+      setTheme(nowLight ? "dark" : "light");
+    });
+
+    function setUserLocation(coords) {
+      currentLocation = [coords.latitude, coords.longitude];
+      if (!userMarker) {
+        userMarker = L.circleMarker(currentLocation, {
+          radius: 8, color: "#f59e0b", fillColor: "#f59e0b", fillOpacity: 0.85
+        }).addTo(map).bindPopup("Posisi Anda");
+      } else {
+        userMarker.setLatLng(currentLocation);
+      }
+      map.flyTo(currentLocation, 14, { duration: 0.8 });
+    }
+
+    document.getElementById("gps-btn").addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        showError("Browser tidak mendukung GPS.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation(pos.coords),
+        () => showError("Gagal mendapatkan lokasi GPS. Izinkan akses lokasi."),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+
+    async function drawRouteToPlace(place) {
+      if (!currentLocation) {
+        showError("Lokasi Anda belum aktif. Klik tombol 'Gunakan GPS Saya' terlebih dulu.");
+        return;
+      }
+      const [lat1, lon1] = currentLocation;
+      const [lat2, lon2] = place.coords;
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("route request failed");
+        const json = await res.json();
+        if (!json.routes || !json.routes[0]) throw new Error("route empty");
+        const routeCoords = json.routes[0].geometry.coordinates.map((c) => [c[1], c[0]]);
+        if (routeLine) map.removeLayer(routeLine);
+        routeLine = L.polyline(routeCoords, { color: "#f59e0b", weight: 5, opacity: 0.9 }).addTo(map);
+        map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+      } catch (err) {
+        window.open(`https://www.google.com/maps/dir/?api=1&origin=${lat1},${lon1}&destination=${lat2},${lon2}`, "_blank");
+      }
+    }
+
+    document.getElementById("btn-detail").addEventListener("click", () => {
+      if (!selectedPlace) return;
+      selectedPlace.marker.openPopup();
+    });
+    document.getElementById("btn-focus").addEventListener("click", () => {
+      if (!selectedPlace) return;
+      map.flyTo(selectedPlace.coords, 17, { duration: 0.8 });
+    });
+    document.getElementById("btn-route").addEventListener("click", () => {
+      if (!selectedPlace) return;
+      drawRouteToPlace(selectedPlace);
+    });
+
+    typeFilter.addEventListener("change", renderMarkersAndList);
+    searchInput.addEventListener("input", renderMarkersAndList);
+
+    async function loadPlaces() {
+      const resp = await fetch("data/Pos_Polisi_dan_Militer.geojson");
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      const data = await resp.json();
+      allPlaces = (data.features || [])
+        .filter((f) => f.geometry && f.geometry.type === "Point" && f.geometry.coordinates)
+        .map((f, idx) => {
+          const props = f.properties || {};
+          const type = isMilitary(props) ? "military" : "police";
+          const coords = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
+          return { id: idx, name: getPlaceName(props, idx), type, address: getPlaceAddress(props), coords, props, marker: null };
+        });
+      renderMarkersAndList();
+      document.getElementById("loading").classList.add("hidden");
+    }
+
+    (async () => {
+      try {
+        const isVercelHost = window.location.hostname.includes("vercel.app");
+        if (!isVercelHost) {
+          const splash = document.getElementById("welcome-overlay");
+          if (splash) splash.style.display = "none";
         }
-      }).addTo(map);
-
-      document.getElementById('count-police').textContent   = nPolice;
-      document.getElementById('count-military').textContent = nMilitary;
-      document.getElementById('loading').classList.add('hidden');
-    })
-    .catch(err => {
-      console.error(err);
-      showError('Gagal memuat <b>data/sorong.geojson</b>. Pastikan file ada di folder <code>data/</code>.');
-      document.getElementById('loading').classList.add('hidden');
-    });
-</script>
+        const savedTheme = localStorage.getItem("webgis_theme") || "dark";
+        setTheme(savedTheme);
+        await loadPlaces();
+      } catch (err) {
+        showError("Gagal memuat data GeoJSON. Pastikan file data/Pos_Polisi_dan_Militer.geojson tersedia.");
+        document.getElementById("loading").classList.add("hidden");
+      }
+    })();
+  </script>
 </body>
 </html>
