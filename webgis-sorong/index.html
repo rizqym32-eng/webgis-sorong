@@ -35,8 +35,50 @@
     #welcome-overlay {
       position: fixed; inset: 0; z-index: 3200;
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-      background: radial-gradient(circle at center, rgba(37,99,235,0.18), transparent 58%), var(--bg-main);
+      background:
+        linear-gradient(rgba(9, 16, 30, 0.58), rgba(9, 16, 30, 0.58)),
+        radial-gradient(circle at center, rgba(37,99,235,0.18), transparent 58%),
+        var(--bg-main);
       animation: hideSplash 4.6s ease forwards;
+      overflow: hidden;
+    }
+    .welcome-gallery {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .welcome-slide {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      filter: saturate(1.02) contrast(1.03);
+      animation: galleryFade 16s infinite;
+      transform: scale(1.02);
+    }
+    .welcome-slide:nth-child(1) { animation-delay: 0s; }
+    .welcome-slide:nth-child(2) { animation-delay: 4s; }
+    .welcome-slide:nth-child(3) { animation-delay: 8s; }
+    .welcome-slide:nth-child(4) { animation-delay: 12s; }
+    @keyframes galleryFade {
+      0% { opacity: 0; }
+      8% { opacity: 0.8; }
+      24% { opacity: 0.8; }
+      30% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    .welcome-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      backdrop-filter: blur(6px);
+      background: rgba(7, 16, 30, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      padding: 14px 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
     }
     #welcome-overlay h2 {
       font-family: "Teko", sans-serif;
@@ -64,11 +106,16 @@
     #header h1 { font-family: "Teko", sans-serif; font-size: 22px; letter-spacing: 1px; font-weight: 600; }
     #header h1 span { color: var(--accent); }
     .header-right { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
-    .theme-btn, .gps-btn, .filter-select {
+    .theme-btn, .gps-btn, .music-btn, .filter-select {
       border: 1px solid var(--border); background: var(--button-bg); color: var(--text);
       border-radius: 7px; font-size: 12px; padding: 7px 10px;
+      transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
     }
-    .theme-btn, .gps-btn { cursor: pointer; font-weight: 600; }
+    .theme-btn, .gps-btn, .music-btn { cursor: pointer; font-weight: 600; }
+    .theme-btn:hover, .gps-btn:hover, .music-btn:hover, .place-go:hover, .action-buttons button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.18);
+    }
     .layout {
       position: fixed; top: 58px; left: 0; right: 0; bottom: 0;
       display: grid; grid-template-columns: 330px 1fr;
@@ -76,6 +123,8 @@
     #sidebar {
       border-right: 1px solid var(--border); background: var(--bg-soft);
       display: flex; flex-direction: column; gap: 10px; padding: 14px;
+      min-height: 0;
+      overflow: hidden;
     }
     .sidebar-title { font-family: "Teko", sans-serif; font-size: 22px; letter-spacing: 1px; }
     .search-input {
@@ -86,6 +135,9 @@
     #place-list {
       list-style: none; overflow: auto; flex: 1; border: 1px solid var(--border);
       border-radius: 10px; background: rgba(17, 28, 46, 0.1);
+      min-height: 0;
+      max-height: 100%;
+      scroll-behavior: smooth;
     }
     .place-item {
       border-bottom: 1px solid var(--border); padding: 10px;
@@ -99,6 +151,7 @@
       cursor: pointer; border: 1px solid var(--border); background: var(--button-bg);
       color: var(--text); border-radius: 7px; padding: 5px 9px; font-size: 11px;
     }
+    .place-go::before { content: "📍 "; }
     #map-wrap { position: relative; }
     #map { position: absolute; inset: 0; }
     #stats {
@@ -130,6 +183,10 @@
       border: 1px solid var(--border); background: var(--button-bg); color: var(--text);
       border-radius: 8px; padding: 7px 6px; cursor: pointer; font-size: 12px;
     }
+    #btn-detail::before { content: "ℹ "; }
+    #btn-focus::before { content: "🎯 "; }
+    #btn-route::before { content: "🧭 "; }
+    #btn-cancel-route::before { content: "✖ "; }
     #loading {
       position: fixed; inset: 0; z-index: 3000; background: color-mix(in srgb, var(--bg-main) 96%, transparent);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
@@ -157,8 +214,16 @@
 </head>
 <body class="dark">
   <div id="welcome-overlay">
-    <h2>Selamat Datang di WebGIS Kota Sorong</h2>
-    <p>webgis by Koy</p>
+    <div class="welcome-gallery">
+      <div class="welcome-slide" style="background-image:url('assets/images/papua-1.jpg'), linear-gradient(#0e1a31,#0e1a31)"></div>
+      <div class="welcome-slide" style="background-image:url('assets/images/papua-2.jpg'), linear-gradient(#0e1a31,#0e1a31)"></div>
+      <div class="welcome-slide" style="background-image:url('assets/images/papua-3.jpg'), linear-gradient(#0e1a31,#0e1a31)"></div>
+      <div class="welcome-slide" style="background-image:url('assets/images/papua-4.jpg'), linear-gradient(#0e1a31,#0e1a31)"></div>
+    </div>
+    <div class="welcome-content">
+      <h2>Selamat Datang di WebGIS Kota Sorong</h2>
+      <p>webgis by Koy</p>
+    </div>
   </div>
 
   <div id="loading">
@@ -172,8 +237,9 @@
       <h1>Kota <span>Sorong</span> - Pos Keamanan</h1>
     </div>
     <div class="header-right">
-      <button class="gps-btn" id="gps-btn">Gunakan GPS Saya</button>
-      <button class="theme-btn" id="theme-btn">Light Mode</button>
+      <button class="gps-btn" id="gps-btn">📡 Gunakan GPS Saya</button>
+      <button class="music-btn" id="music-btn">🔊 Musik: ON</button>
+      <button class="theme-btn" id="theme-btn">🌗 Light Mode</button>
       <span>Papua Barat Daya</span>
     </div>
   </header>
@@ -224,6 +290,9 @@
   </main>
 
   <div id="error-box" class="error-box"></div>
+  <audio id="bg-music" loop preload="auto">
+    <source src="assets/audio/background-music.mp3" type="audio/mpeg" />
+  </audio>
 
   <script>
     const map = L.map("map", { center: [-0.8617, 131.252], zoom: 13, zoomControl: true });
@@ -244,12 +313,15 @@
     const actionPanel = document.getElementById("action-panel");
     const actionTitle = document.getElementById("action-title");
     const routeModeSelect = document.getElementById("route-mode");
+    const musicBtn = document.getElementById("music-btn");
+    const bgMusic = document.getElementById("bg-music");
 
     let currentLocation = null;
     let userMarker = null;
     let routeLine = null;
     let selectedPlace = null;
     let allPlaces = [];
+    let isMusicOn = true;
     const markerLayer = L.layerGroup().addTo(map);
 
     function makeIcon(color, label) {
@@ -375,7 +447,7 @@
 
         const li = document.createElement("li");
         li.className = "place-item";
-        li.innerHTML = `<div class="place-label"><span class="place-name">${place.name}</span><span class="place-type">${place.type === "police" ? "Pos Polisi" : "Pos Militer"}</span></div><button class="place-go">Lihat</button>`;
+        li.innerHTML = `<div class="place-label"><span class="place-name">${place.name}</span><span class="place-type">${place.type === "police" ? "🚓 Pos Polisi" : "🪖 Pos Militer"}</span></div><button class="place-go">Lihat</button>`;
         li.querySelector(".place-go").addEventListener("click", () => {
           map.flyTo(place.coords, 16, { duration: 0.8 });
           marker.openPopup();
@@ -406,6 +478,28 @@
       const nowLight = body.classList.contains("light");
       setTheme(nowLight ? "dark" : "light");
     });
+    function updateMusicButton() {
+      musicBtn.textContent = isMusicOn ? "🔊 Musik: ON" : "🔈 Musik: OFF";
+    }
+    function tryPlayMusic() {
+      if (!isMusicOn) return;
+      bgMusic.volume = 0.35;
+      bgMusic.play().catch(() => {
+        musicBtn.textContent = "▶ Klik untuk putar musik";
+      });
+    }
+    musicBtn.addEventListener("click", () => {
+      isMusicOn = !isMusicOn;
+      if (isMusicOn) {
+        updateMusicButton();
+        tryPlayMusic();
+      } else {
+        bgMusic.pause();
+        updateMusicButton();
+      }
+      localStorage.setItem("webgis_music_on", isMusicOn ? "1" : "0");
+    });
+    document.addEventListener("click", tryPlayMusic, { once: true });
 
     function setUserLocation(coords) {
       currentLocation = [coords.latitude, coords.longitude];
@@ -519,6 +613,9 @@
           if (splash) splash.style.display = "none";
         }
         const savedTheme = localStorage.getItem("webgis_theme") || "dark";
+        isMusicOn = localStorage.getItem("webgis_music_on") !== "0";
+        updateMusicButton();
+        tryPlayMusic();
         setTheme(savedTheme);
         await loadPlaces();
       } catch (err) {
