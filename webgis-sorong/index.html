@@ -215,10 +215,10 @@
 <body class="dark">
   <div id="welcome-overlay">
     <div class="welcome-gallery">
-      <div class="welcome-slide" style="background-image:url('assets/images/papua-1.jpg'), linear-gradient(#0e1a31,#0e1a31)"></div>
-      <div class="welcome-slide" style="background-image:url('assets/images/papua-2.jpg'), linear-gradient(#0e1a31,#0e1a31)"></div>
-      <div class="welcome-slide" style="background-image:url('assets/images/papua-3.jpg'), linear-gradient(#0e1a31,#0e1a31)"></div>
-      <div class="welcome-slide" style="background-image:url('assets/images/papua-4.jpg'), linear-gradient(#0e1a31,#0e1a31)"></div>
+      <div class="welcome-slide" style="background-image:url('assets/images/papua-1.jpg.png'), linear-gradient(#0e1a31,#0e1a31)"></div>
+      <div class="welcome-slide" style="background-image:url('assets/images/papua-2.jpg.png'), linear-gradient(#0e1a31,#0e1a31)"></div>
+      <div class="welcome-slide" style="background-image:url('assets/images/papua-3.jpg.png'), linear-gradient(#0e1a31,#0e1a31)"></div>
+      <div class="welcome-slide" style="background-image:url('assets/images/papua-4.jpg.png'), linear-gradient(#0e1a31,#0e1a31)"></div>
     </div>
     <div class="welcome-content">
       <h2>Selamat Datang di WebGIS Kota Sorong</h2>
@@ -291,7 +291,7 @@
 
   <div id="error-box" class="error-box"></div>
   <audio id="bg-music" loop preload="auto">
-    <source src="assets/audio/background-music.mp3" type="audio/mpeg" />
+    <source src="assets/audio/alec_koff-carnaval-484622.mp3" type="audio/mpeg" />
   </audio>
 
   <script>
@@ -488,8 +488,8 @@
         musicBtn.textContent = "▶ Klik untuk putar musik";
       });
     }
-    musicBtn.addEventListener("click", () => {
-      isMusicOn = !isMusicOn;
+    function setMusicEnabled(enabled) {
+      isMusicOn = enabled;
       if (isMusicOn) {
         updateMusicButton();
         tryPlayMusic();
@@ -498,8 +498,15 @@
         updateMusicButton();
       }
       localStorage.setItem("webgis_music_on", isMusicOn ? "1" : "0");
+    }
+    musicBtn.addEventListener("click", () => {
+      if (musicBtn.textContent.includes("Klik untuk putar")) {
+        setMusicEnabled(true);
+        return;
+      }
+      setMusicEnabled(!isMusicOn);
     });
-    document.addEventListener("click", tryPlayMusic, { once: true });
+    document.addEventListener("pointerdown", tryPlayMusic, { once: true });
 
     function setUserLocation(coords) {
       currentLocation = [coords.latitude, coords.longitude];
