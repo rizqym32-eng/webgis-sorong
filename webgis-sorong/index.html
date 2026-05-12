@@ -3,61 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WebGIS Kota Sorong - Pos Polisi & Pos Militer</title>
+  <title>WebGIS Kota Sorong — Amenitas & Infrastruktur</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&family=Barlow:wght@300;400;500;600&display=swap");
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg-main: #0b1423;
-      --bg-soft: #162035;
-      --bg-header: #111c2e;
-      --border: #1e3058;
+    html, body { height: 100%; font-family: "Barlow", "Segoe UI", sans-serif; overflow: hidden; }
+    body {
+      --bg: #0b1423;
+      --panel: rgba(17, 28, 46, 0.94);
+      --panel-border: #1e3058;
       --text: #e2e8f0;
       --muted: #9caec8;
       --accent: #f59e0b;
-      --police: #2563eb;
-      --military: #16a34a;
-      --button-bg: #243352;
+      --chip: #243352;
     }
-    body.light {
-      --bg-main: #f3f6fb;
-      --bg-soft: #ffffff;
-      --bg-header: #ffffff;
-      --border: #cdd9ec;
-      --text: #13213b;
-      --muted: #4a5c7b;
+    body.theme-light {
+      --bg: #f1f5f9;
+      --panel: rgba(255, 255, 255, 0.94);
+      --panel-border: #cbd5e1;
+      --text: #0f172a;
+      --muted: #475569;
       --accent: #d97706;
-      --button-bg: #edf3ff;
+      --chip: #e2e8f0;
     }
-    html, body { height: 100%; font-family: "Barlow", sans-serif; background: var(--bg-main); color: var(--text); overflow: hidden; }
+    body { background: var(--bg); color: var(--text); }
+
+    /* === SPLASH (unchanged look: gallery + card + skip) === */
     #welcome-overlay {
       position: fixed; inset: 0; z-index: 3200;
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
       background:
         linear-gradient(rgba(9, 16, 30, 0.58), rgba(9, 16, 30, 0.58)),
         radial-gradient(circle at center, rgba(37,99,235,0.18), transparent 58%),
-        var(--bg-main);
+        var(--bg);
       animation: hideSplash 14s ease forwards;
       overflow: hidden;
     }
-    .welcome-gallery {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-    }
+    .welcome-gallery { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
     .welcome-slide {
-      position: absolute;
-      inset: 0;
-      background-size: cover;
-      background-position: center;
-      opacity: 0;
-      filter: saturate(1.02) contrast(1.03);
-      animation: galleryFade 12s infinite;
-      transform: scale(1.02);
-      will-change: opacity, transform;
+      position: absolute; inset: 0; background-size: cover; background-position: center;
+      opacity: 0; filter: saturate(1.02) contrast(1.03); animation: galleryFade 12s infinite; transform: scale(1.02);
     }
     .welcome-slide:nth-child(1) { animation-delay: 0s; }
     .welcome-slide:nth-child(2) { animation-delay: 3s; }
@@ -71,231 +62,191 @@
       100% { opacity: 0; }
     }
     .welcome-content {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      backdrop-filter: blur(6px);
-      background: rgba(7, 16, 30, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 14px;
-      padding: 14px 18px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      position: relative; z-index: 1; text-align: center; backdrop-filter: blur(6px);
+      background: rgba(7, 16, 30, 0.35); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 14px;
+      padding: 14px 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
       animation: floatCard 2.2s ease-in-out infinite alternate;
     }
     .welcome-subline {
-      margin-top: 9px;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      align-items: center;
-      font-size: 11px;
-      color: rgba(226, 232, 240, 0.8);
-      letter-spacing: 0.4px;
+      margin-top: 9px; display: flex; gap: 8px; justify-content: center; align-items: center;
+      font-size: 11px; color: rgba(226, 232, 240, 0.8); letter-spacing: 0.4px;
     }
     .welcome-subline .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: rgba(245, 158, 11, 0.85);
+      width: 7px; height: 7px; border-radius: 50%; background: rgba(245, 158, 11, 0.85);
       box-shadow: 0 0 8px rgba(245, 158, 11, 0.75);
     }
-    .welcome-progress {
-      margin-top: 8px;
-      height: 3px;
-      border-radius: 99px;
-      background: rgba(255, 255, 255, 0.15);
-      overflow: hidden;
-    }
+    .welcome-progress { margin-top: 8px; height: 3px; border-radius: 99px; background: rgba(255, 255, 255, 0.15); overflow: hidden; }
     .welcome-progress::before {
-      content: "";
-      display: block;
-      height: 100%;
-      width: 0;
-      background: linear-gradient(90deg, #60a5fa, #f59e0b);
-      animation: loadingBar 12s linear forwards;
+      content: ""; display: block; height: 100%; width: 0;
+      background: linear-gradient(90deg, #60a5fa, #f59e0b); animation: loadingBar 12s linear forwards;
     }
     .skip-intro-btn {
-      margin-top: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      background: rgba(15, 23, 42, 0.42);
-      color: #e2e8f0;
-      border-radius: 999px;
-      padding: 7px 14px;
-      font-size: 12px;
-      cursor: pointer;
+      margin-top: 12px; border: 1px solid rgba(255, 255, 255, 0.35);
+      background: rgba(15, 23, 42, 0.42); color: #e2e8f0; border-radius: 999px;
+      padding: 7px 14px; font-size: 12px; cursor: pointer;
       transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
     }
-    .skip-intro-btn:hover {
-      transform: translateY(-1px);
-      background: rgba(30, 41, 59, 0.62);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
-    }
-    @keyframes loadingBar {
-      from { width: 0; }
-      to { width: 100%; }
-    }
-    @keyframes floatCard {
-      from { transform: translateY(0px); }
-      to { transform: translateY(-6px); }
-    }
+    .skip-intro-btn:hover { transform: translateY(-1px); background: rgba(30, 41, 59, 0.62); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24); }
+    @keyframes loadingBar { from { width: 0; } to { width: 100%; } }
+    @keyframes floatCard { from { transform: translateY(0px); } to { transform: translateY(-6px); } }
     #welcome-overlay h2 {
-      font-family: "Teko", sans-serif;
-      font-size: clamp(34px, 4.7vw, 62px);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text);
-      animation: welcomeIn 0.9s ease;
-      text-align: center;
-      padding: 0 12px;
+      font-family: "Teko", sans-serif; font-size: clamp(34px, 4.7vw, 62px); letter-spacing: 1.5px;
+      text-transform: uppercase; color: #e2e8f0; animation: welcomeIn 0.9s ease; text-align: center; padding: 0 12px;
     }
-    #welcome-overlay p { font-size: 14px; color: var(--muted); animation: welcomeIn 1.3s ease; }
+    #welcome-overlay p { font-size: 14px; color: #9caec8; animation: welcomeIn 1.3s ease; }
     @keyframes welcomeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes hideSplash {
-      0%, 88% { opacity: 1; }
-      100% { opacity: 0; pointer-events: none; }
-    }
-    #header {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 2100; height: 58px;
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      padding: 0 16px; background: linear-gradient(90deg, var(--bg-main), var(--bg-header)); border-bottom: 1px solid var(--border);
-    }
-    .header-left { display: flex; align-items: center; gap: 10px; }
-    .header-badge {
-      font-family: "Teko", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px;
-      background: var(--accent); color: #111; padding: 2px 8px; border-radius: 4px;
-    }
-    #header h1 { font-family: "Teko", sans-serif; font-size: 22px; letter-spacing: 1px; font-weight: 600; }
-    #header h1 span { color: var(--accent); }
-    .header-right { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
-    .theme-btn, .gps-btn, .music-btn, .filter-select {
-      border: 1px solid var(--border); background: var(--button-bg); color: var(--text);
-      border-radius: 7px; font-size: 12px; padding: 7px 10px;
-      transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
-    }
-    .theme-btn, .gps-btn, .music-btn { cursor: pointer; font-weight: 600; }
-    .theme-btn:hover, .gps-btn:hover, .music-btn:hover, .place-go:hover, .action-buttons button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.18);
-    }
-    .volume-wrap {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border: 1px solid var(--border);
-      background: var(--button-bg);
-      border-radius: 8px;
-      padding: 5px 8px;
-      color: var(--text);
-      font-size: 11px;
-    }
-    #volume-slider {
-      width: 84px;
-      accent-color: #f59e0b;
-      cursor: pointer;
-    }
-    #volume-label {
-      min-width: 34px;
-      text-align: right;
-      color: var(--muted);
-      font-weight: 600;
-    }
-    .layout {
-      position: fixed; top: 58px; left: 0; right: 0; bottom: 0;
-      display: grid; grid-template-columns: 330px 1fr;
-    }
-    #sidebar {
-      border-right: 1px solid var(--border); background: var(--bg-soft);
-      display: flex; flex-direction: column; gap: 10px; padding: 14px;
-      min-height: 0;
-      overflow: hidden;
-    }
-    .sidebar-title { font-family: "Teko", sans-serif; font-size: 22px; letter-spacing: 1px; }
-    .search-input {
-      width: 100%; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text);
-      padding: 10px 11px; font-size: 13px;
-    }
-    #list-meta { font-size: 12px; color: var(--muted); }
-    #place-list {
-      list-style: none; overflow: auto; flex: 1; border: 1px solid var(--border);
-      border-radius: 10px; background: rgba(17, 28, 46, 0.1);
-      min-height: 0;
-      max-height: 100%;
-      scroll-behavior: smooth;
-    }
-    .place-item {
-      border-bottom: 1px solid var(--border); padding: 10px;
-      display: flex; justify-content: space-between; gap: 8px; align-items: center;
-    }
-    .place-item:last-child { border-bottom: none; }
-    .place-label { display: flex; flex-direction: column; gap: 2px; }
-    .place-name { font-weight: 600; font-size: 13px; color: var(--text); }
-    .place-type { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .place-go {
-      cursor: pointer; border: 1px solid var(--border); background: var(--button-bg);
-      color: var(--text); border-radius: 7px; padding: 5px 9px; font-size: 11px;
-    }
-    .place-go::before { content: "📍 "; }
-    #map-wrap { position: relative; }
+    @keyframes hideSplash { 0%, 88% { opacity: 1; } 100% { opacity: 0; pointer-events: none; } }
+
     #map { position: absolute; inset: 0; }
-    #stats {
-      position: absolute; top: 14px; right: 14px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;
+    #loadPanel {
+      position: absolute; z-index: 1100; top: 12px; left: 12px; width: min(360px, calc(100vw - 24px));
+      background: var(--panel); backdrop-filter: blur(10px); border: 1px solid var(--panel-border);
+      border-radius: 14px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28); font-size: 13px; max-height: calc(100vh - 24px);
+      display: flex; flex-direction: column;
     }
-    .stat-card {
-      min-width: 160px; border-radius: 8px; border: 1px solid var(--border);
-      background: color-mix(in srgb, var(--bg-soft) 92%, transparent); padding: 9px 12px; font-size: 12px; color: var(--muted);
+    #loadPanel.collapsed .panel-scroll { display: none; }
+    #loadPanel.collapsed { width: 240px; }
+    .panel-header {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+      padding: 12px 12px 8px; border-bottom: 1px solid var(--panel-border);
     }
-    .stat-num { display: block; font-family: "Teko", sans-serif; font-size: 26px; line-height: 1; color: var(--text); }
-    #action-panel {
-      position: absolute; left: 14px; bottom: 14px; z-index: 1100; width: 275px;
-      border-radius: 9px; border: 1px solid var(--border); background: var(--bg-soft); padding: 12px; display: none;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    .panel-title { font-family: "Teko", sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--text); }
+    .panel-title span { color: var(--accent); }
+    .panel-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .panel-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .icon-btn, .theme-btn {
+      border: 1px solid var(--panel-border); background: var(--chip); color: var(--text);
+      border-radius: 8px; font-size: 11px; font-weight: 600; padding: 5px 8px; cursor: pointer;
     }
-    .action-title { font-weight: 600; margin-bottom: 9px; font-size: 14px; }
-    .route-mode-select {
-      width: 100%;
-      margin-bottom: 8px;
-      border: 1px solid var(--border);
-      background: var(--button-bg);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 7px;
-      font-size: 12px;
+    .panel-scroll { overflow-y: auto; padding: 10px 12px 12px; flex: 1; min-height: 0; }
+    .search-row { display: flex; gap: 6px; margin-bottom: 8px; position: relative; }
+    .search-input-wrap { flex: 1; position: relative; }
+    .search-input {
+      width: 100%; border: 1px solid var(--panel-border); border-radius: 10px; padding: 8px 10px;
+      font-size: 12px; background: transparent; color: var(--text);
     }
-    .action-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
-    .action-buttons button {
-      border: 1px solid var(--border); background: var(--button-bg); color: var(--text);
-      border-radius: 8px; padding: 7px 6px; cursor: pointer; font-size: 12px;
+    .search-btn { border: 0; border-radius: 10px; background: var(--accent); color: #111; font-weight: 700; padding: 8px 10px; cursor: pointer; font-size: 12px; }
+    .search-suggestions {
+      position: absolute; top: 100%; left: 0; right: 0; background: var(--panel); border: 1px solid var(--panel-border);
+      border-top: none; border-radius: 0 0 10px 10px; max-height: 200px; overflow-y: auto; display: none; z-index: 2000;
     }
-    #btn-detail::before { content: "ℹ "; }
-    #btn-focus::before { content: "🎯 "; }
-    #btn-route::before { content: "🧭 "; }
-    #btn-cancel-route::before { content: "✖ "; }
+    .search-suggestions.visible { display: block; }
+    .sugg-item { padding: 8px 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid var(--panel-border); }
+    .sugg-item:hover { background: rgba(245, 158, 11, 0.12); }
+    .map-style-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .map-style-btn {
+      border: 1px solid var(--panel-border); background: var(--chip); color: var(--text);
+      border-radius: 999px; font-size: 11px; font-weight: 600; padding: 5px 10px; cursor: pointer;
+    }
+    .map-style-btn.active { border-color: var(--accent); color: var(--accent); }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 10px;
+    }
+    .stat-item {
+      border: 1px solid var(--panel-border); border-radius: 10px; padding: 8px; background: rgba(0, 0, 0, 0.12);
+    }
+    body.theme-light .stat-item { background: rgba(255, 255, 255, 0.6); }
+    .stat-label { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .stat-value { font-family: "Teko", sans-serif; font-size: 22px; color: var(--text); }
+
+    .health-freq-card {
+      margin-bottom: 10px; padding: 10px; border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 78, 59, 0.08));
+    }
+    .health-freq-title {
+      font-size: 10px; font-weight: 700; color: #34d399; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    body.theme-light .health-freq-title { color: #047857; }
+    .health-freq-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .donut-wrap { position: relative; width: 86px; height: 86px; flex-shrink: 0; }
+    .donut-center {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; line-height: 1.15;
+    }
+    .donut-center-pct { font-size: 14px; font-weight: 800; color: #34d399; display: block; }
+    .donut-center-lbl { font-size: 8px; color: var(--muted); display: block; }
+    .freq-legend { flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 10px; }
+    .freq-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .freq-dot.high { background: #10b981; }
+    .freq-dot.low { background: #f97316; }
+
+    .layer-card, .filter-card {
+      border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.08);
+    }
+    body.theme-light .layer-card, body.theme-light .filter-card { background: rgba(255, 255, 255, 0.65); }
+    .section-title { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .chk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px; }
+    .chk-grid label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text); }
+    .filter-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .btn-primary {
+      flex: 1; border: 0; border-radius: 10px; background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: #fff; font-weight: 700; font-size: 12px; padding: 8px; cursor: pointer;
+    }
+    .btn-ghost { border: 1px solid var(--panel-border); border-radius: 10px; background: transparent; color: var(--text); font-weight: 600; font-size: 12px; padding: 8px 10px; cursor: pointer; }
+
+    .heat-select-wrap { margin-bottom: 10px; }
+    .heat-select-wrap select {
+      width: 100%; border: 1px solid var(--panel-border); border-radius: 8px; padding: 8px; font-size: 12px;
+      background: var(--chip); color: var(--text);
+    }
+    .helper-note { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+
+    .fab-col { position: absolute; z-index: 1100; right: 12px; bottom: 42px; display: flex; flex-direction: column; gap: 8px; }
+    .fab {
+      width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--panel-border);
+      background: var(--panel); color: var(--text); font-size: 18px; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: center;
+    }
+    .fab:hover { transform: translateY(-2px); }
+    #coordBar {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 1050;
+      background: rgba(15, 23, 42, 0.75); color: #e2e8f0; font-size: 11px; font-family: Consolas, monospace;
+      padding: 4px 12px; display: flex; gap: 16px; pointer-events: none;
+    }
+    body.theme-light #coordBar { background: rgba(255, 255, 255, 0.9); color: #0f172a; }
+
     #loading {
-      position: fixed; inset: 0; z-index: 3000; background: color-mix(in srgb, var(--bg-main) 96%, transparent);
+      position: fixed; inset: 0; z-index: 3000; background: rgba(11, 20, 35, 0.92);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
       transition: opacity 0.4s ease;
     }
     #loading.hidden { opacity: 0; pointer-events: none; }
-    .spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: spin 1s linear infinite; }
+    .spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--panel-border); border-top-color: var(--accent); animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
     .error-box {
-      position: fixed; top: 70px; left: 16px; z-index: 3100; display: none; max-width: 290px;
-      background: #7f1d1d; color: #fee2e2; border: 1px solid #ef4444; border-radius: 8px; padding: 10px 12px; font-size: 12px;
+      position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 3100; max-width: 320px;
+      background: #7f1d1d; color: #fee2e2; border-radius: 10px; padding: 10px 12px; font-size: 12px; display: none;
     }
+
     .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-      background: var(--bg-soft) !important; color: var(--text) !important; border: 1px solid var(--border) !important;
+      background: var(--panel) !important; color: var(--text) !important; border: 1px solid var(--panel-border) !important;
     }
-    .leaflet-popup-content { margin: 10px 12px !important; font-size: 12px !important; }
-    @media (max-width: 980px) {
-      .layout { grid-template-columns: 1fr; }
-      #sidebar {
-        position: absolute; z-index: 1500; top: 10px; left: 10px; width: min(92vw, 320px); max-height: 80vh;
-        border: 1px solid var(--border); border-radius: 11px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
-      }
+
+    #action-panel {
+      position: absolute; left: 12px; bottom: 42px; z-index: 1100; width: 260px;
+      border-radius: 10px; border: 1px solid var(--panel-border); background: var(--panel); padding: 10px; display: none;
     }
+    .action-title { font-weight: 600; margin-bottom: 8px; font-size: 13px; }
+    .route-mode-select { width: 100%; margin-bottom: 8px; border: 1px solid var(--panel-border); background: var(--chip); color: var(--text); border-radius: 8px; padding: 6px; font-size: 12px; }
+    .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .action-buttons button {
+      border: 1px solid var(--panel-border); background: var(--chip); color: var(--text); border-radius: 8px; padding: 7px; cursor: pointer; font-size: 11px;
+    }
+
+    #bg-music-wrap { position: absolute; z-index: 1100; right: 12px; top: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .music-compact { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; padding: 6px 8px; font-size: 11px; }
+    #volume-slider { width: 72px; accent-color: var(--accent); }
+
+    .legend {
+      position: absolute; z-index: 1000; bottom: 42px; left: 50%; transform: translateX(-50%);
+      background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; padding: 8px 12px; font-size: 11px; max-width: 90vw;
+    }
+    .legend-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .leg { display: flex; align-items: center; gap: 4px; }
+    .leg i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   </style>
 </head>
-<body class="dark">
+<body>
   <div id="welcome-overlay">
     <div class="welcome-gallery">
       <div class="welcome-slide" style="background-image:url('assets/images/papua-1.jpg.png'), linear-gradient(#0e1a31,#0e1a31)"></div>
@@ -312,7 +263,7 @@
         <span class="dot"></span>
       </div>
       <div class="welcome-progress"></div>
-      <button id="skip-intro-btn" class="skip-intro-btn">⏭ Lewati (Space / Enter)</button>
+      <button id="skip-intro-btn" class="skip-intro-btn" type="button">⏭ Lewati (Space / Enter)</button>
     </div>
   </div>
 
@@ -321,448 +272,759 @@
     <p>Memuat data peta...</p>
   </div>
 
-  <header id="header">
-    <div class="header-left">
-      <span class="header-badge">WEBGIS</span>
-      <h1>Kota <span>Sorong</span> - Pos Keamanan</h1>
-    </div>
-    <div class="header-right">
-      <button class="gps-btn" id="gps-btn">📡 Gunakan GPS Saya</button>
-      <button class="music-btn" id="music-btn">🔊 Musik: ON</button>
-      <div class="volume-wrap">
-        <span>🔉</span>
-        <input id="volume-slider" type="range" min="0" max="100" value="35" />
-        <span id="volume-label">35%</span>
-      </div>
-      <button class="theme-btn" id="theme-btn">🌗 Light Mode</button>
-      <span>Papua Barat Daya</span>
-    </div>
-  </header>
+  <div id="map"></div>
 
-  <main class="layout">
-    <aside id="sidebar">
-      <h2 class="sidebar-title">Daftar Tempat</h2>
-      <select id="type-filter" class="filter-select">
-        <option value="all">Semua Tempat</option>
-        <option value="police">Pos Polisi</option>
-        <option value="military">Pos Militer</option>
-      </select>
-      <input id="search-input" class="search-input" type="text" placeholder="Cari berdasarkan nama..." />
-      <div id="list-meta">Memuat data...</div>
-      <ul id="place-list"></ul>
-    </aside>
+  <div id="bg-music-wrap">
+    <div class="music-compact">
+      <button type="button" class="icon-btn" id="music-btn">🔊 Musik</button>
+      <input id="volume-slider" type="range" min="0" max="100" value="35" />
+      <span id="volume-label" style="min-width:32px;color:var(--muted);">35%</span>
+    </div>
+  </div>
 
-    <section id="map-wrap">
-      <div id="map"></div>
-      <div id="stats">
-        <div class="stat-card">
-          <span class="stat-num" id="count-all">0</span>Total Tempat
+  <div id="loadPanel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Kota <span>Sorong</span></div>
+        <div class="panel-sub">Amenitas · Bangunan · Batas · Heatmap (simulasi)</div>
+      </div>
+      <div class="panel-actions">
+        <button type="button" class="icon-btn" id="panel-toggle">Ringkas</button>
+        <button type="button" class="theme-btn" id="theme-btn">Light</button>
+      </div>
+    </div>
+    <div class="panel-scroll">
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <input id="search-input" class="search-input" type="text" placeholder="Cari nama fasilitas..." autocomplete="off" />
+          <div id="search-suggestions" class="search-suggestions"></div>
         </div>
-        <div class="stat-card">
-          <span class="stat-num" id="count-police">0</span>Pos Polisi
-        </div>
-        <div class="stat-card">
-          <span class="stat-num" id="count-military">0</span>Pos Militer
+        <button type="button" class="search-btn" id="search-btn">Cari</button>
+      </div>
+      <button type="button" class="icon-btn" id="gps-btn" style="width:100%;margin-bottom:8px;">📡 Gunakan GPS Saya</button>
+
+      <div class="map-style-row">
+        <button type="button" class="map-style-btn active" data-style="road">Peta</button>
+        <button type="button" class="map-style-btn" data-style="sat">Satelit</button>
+        <button type="button" class="map-style-btn" data-style="hybrid">Hibrid</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-item"><div class="stat-label">Total fitur</div><div class="stat-value" id="st-total">0</div></div>
+        <div class="stat-item"><div class="stat-label">Kesehatan</div><div class="stat-value" id="st-health">0</div></div>
+        <div class="stat-item"><div class="stat-label">Pendidikan</div><div class="stat-value" id="st-edu">0</div></div>
+        <div class="stat-item"><div class="stat-label">Ibadah</div><div class="stat-value" id="st-worship">0</div></div>
+        <div class="stat-item"><div class="stat-label">Polisi</div><div class="stat-value" id="st-police">0</div></div>
+        <div class="stat-item"><div class="stat-label">Militer</div><div class="stat-value" id="st-mil">0</div></div>
+      </div>
+
+      <div class="health-freq-card">
+        <div class="health-freq-title">Intensitas kunjungan pasien (simulasi visual)</div>
+        <div class="health-freq-wrap">
+          <div class="donut-wrap">
+            <svg viewBox="0 0 90 90" width="86" height="86">
+              <circle cx="45" cy="45" r="34" fill="none" stroke="rgba(148,163,184,0.35)" stroke-width="10" />
+              <circle id="donutHigh" cx="45" cy="45" r="34" fill="none" stroke="#10b981" stroke-width="10"
+                stroke-dasharray="0 213.6" stroke-dashoffset="53.4" style="transition:stroke-dasharray 0.8s ease;transform-origin:center;transform:rotate(-90deg);" />
+              <circle id="donutLow" cx="45" cy="45" r="34" fill="none" stroke="#f97316" stroke-width="10"
+                stroke-dasharray="0 213.6" stroke-dashoffset="53.4" style="transition:stroke-dasharray 0.8s ease;transform-origin:center;transform:rotate(-90deg);" />
+            </svg>
+            <div class="donut-center">
+              <span class="donut-center-pct" id="donutCenterPct">0%</span>
+              <span class="donut-center-lbl">Beban tinggi</span>
+            </div>
+          </div>
+          <div class="freq-legend">
+            <div><span class="freq-dot high"></span><strong id="pctHigh">0%</strong> beban tinggi <span id="cntHigh" style="color:var(--muted)">(0)</span></div>
+            <div><span class="freq-dot low"></span><strong id="pctLow">0%</strong> beban rendah <span id="cntLow" style="color:var(--muted)">(0)</span></div>
+            <div class="helper-note">Data dummy deterministik dari ID OSM — hanya untuk ilustrasi grafik.</div>
+          </div>
         </div>
       </div>
-      <div id="action-panel">
-        <div class="action-title" id="action-title">Pilih Aksi</div>
-        <select id="route-mode" class="route-mode-select">
-          <option value="driving">Mobil</option>
-          <option value="motorcycle">Motor</option>
-          <option value="walking">Jalan Kaki</option>
-          <option value="train">Kereta</option>
-          <option value="plane">Pesawat</option>
+
+      <div class="heat-select-wrap">
+        <div class="section-title">Heatmap (simulasi)</div>
+        <select id="heat-mode">
+          <option value="off">Mati</option>
+          <option value="pop">Kepadatan penduduk (estimasi)</option>
+          <option value="crime">Indeks kriminalitas (estimasi)</option>
         </select>
-        <div class="action-buttons">
-          <button id="btn-detail">Detail</button>
-          <button id="btn-focus">Fokus</button>
-          <button id="btn-route">Rute</button>
-          <button id="btn-cancel-route">Cancel Rute</button>
+      </div>
+
+      <div class="layer-card">
+        <div class="section-title">Layer peta</div>
+        <div class="chk-grid">
+          <label><input type="checkbox" id="ly-amenity" checked /> Amenitas (titik)</label>
+          <label><input type="checkbox" id="ly-building" checked /> Bangunan</label>
+          <label><input type="checkbox" id="ly-road" /> Overlay jalan (Esri)</label>
+          <label><input type="checkbox" id="ly-boundary" checked /> Batas wilayah (clip)</label>
+        </div>
+        <p class="helper-note">GeoJSON Sorong tidak berisi garis jalan vektor; overlay menampilkan jaringan jalan referensi.</p>
+      </div>
+
+      <div class="filter-card">
+        <div class="section-title">Filter amenitas</div>
+        <div class="chk-grid">
+          <label><input type="checkbox" class="amen-filter" data-cat="health" checked /> RS &amp; klinik</label>
+          <label><input type="checkbox" class="amen-filter" data-cat="school" checked /> Sekolah</label>
+          <label><input type="checkbox" class="amen-filter" data-cat="higher" checked /> Kampus / univ.</label>
+          <label><input type="checkbox" class="amen-filter" data-cat="worship" checked /> Ibadah</label>
+          <label><input type="checkbox" class="amen-filter" data-cat="police" checked /> Polisi</label>
+          <label><input type="checkbox" class="amen-filter" data-cat="military" checked /> Militer</label>
+        </div>
+        <div class="filter-actions">
+          <button type="button" class="btn-primary" id="apply-filter">Terapkan filter</button>
+          <button type="button" class="btn-ghost" id="reset-filter">Reset</button>
         </div>
       </div>
-    </section>
-  </main>
+
+      <div id="load-status" style="font-size:11px;color:var(--muted);">Siap</div>
+    </div>
+  </div>
+
+  <div class="fab-col">
+    <button type="button" class="fab" id="fab-full" title="Layar penuh">⛶</button>
+    <button type="button" class="fab" id="fab-fit" title="Zoom semua data">🎯</button>
+    <button type="button" class="fab" id="fab-csv" title="Ekspor CSV">📤</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-row">
+      <span class="leg"><i style="background:#2563eb"></i>Polisi</span>
+      <span class="leg"><i style="background:#15803d"></i>Militer</span>
+      <span class="leg"><i style="background:#dc2626"></i>Kesehatan</span>
+      <span class="leg"><i style="background:#ca8a04"></i>Sekolah</span>
+      <span class="leg"><i style="background:#7c3aed"></i>Perguruan tinggi</span>
+      <span class="leg"><i style="background:#4f46e5"></i>Ibadah</span>
+    </div>
+  </div>
+
+  <div id="coordBar">
+    <span>Lat:</span> <b id="coordLat">–</b>
+    <span>Lng:</span> <b id="coordLng">–</b>
+    <span>Zoom:</span> <b id="coordZoom">13</b>
+  </div>
+
+  <div id="action-panel">
+    <div class="action-title" id="action-title">Pilih aksi</div>
+    <select id="route-mode" class="route-mode-select">
+      <option value="driving">Mobil</option>
+      <option value="motorcycle">Motor</option>
+      <option value="walking">Jalan kaki</option>
+    </select>
+    <div class="action-buttons">
+      <button type="button" id="btn-detail">Detail</button>
+      <button type="button" id="btn-focus">Fokus</button>
+      <button type="button" id="btn-route">Rute</button>
+      <button type="button" id="btn-cancel-route">Hapus rute</button>
+    </div>
+  </div>
 
   <div id="error-box" class="error-box"></div>
+
   <audio id="bg-music" loop preload="auto">
     <source src="assets/audio/alec_koff-carnaval-484622.mp3" type="audio/mpeg" />
   </audio>
 
   <script>
-    const map = L.map("map", { center: [-0.8617, 131.252], zoom: 13, zoomControl: true });
-    const tileLight = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19
+(function () {
+  const map = L.map("map", { center: [-0.87, 131.27], zoom: 13, zoomControl: true });
+  const road = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+    maxZoom: 20, attribution: "&copy; OSM &copy; CARTO"
+  });
+  const dark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    maxZoom: 20, attribution: "&copy; OSM &copy; CARTO"
+  });
+  const satellite = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom: 19, attribution: "Esri" }
+  );
+  const hybridLabels = L.tileLayer(
+    "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom: 19, attribution: "Esri" }
+  );
+  const transportOverlay = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom: 19, opacity: 0.75, attribution: "Esri Transport" }
+  );
+  dark.addTo(map);
+
+  const amenityCluster = L.markerClusterGroup({ maxClusterRadius: 45 });
+  const buildingLayer = L.geoJSON(null, {
+    style: () => ({
+      color: "#64748b", weight: 1, fillColor: "#94a3b8", fillOpacity: 0.28
+    })
+  });
+  const boundaryLayer = L.geoJSON(null, {
+    style: { color: "#f59e0b", weight: 3, fillOpacity: 0, dashArray: "6 4" }
+  });
+
+  let heatLayer = null;
+  let currentHeatMode = "off";
+  let allRecords = [];
+  let geoData = null;
+  let selectedPlace = null;
+  let userMarker = null;
+  let routeLine = null;
+  let currentLocation = null;
+  const filterCats = { health: true, school: true, higher: true, worship: true, police: true, military: true };
+
+  const body = document.body;
+  const welcomeOverlay = document.getElementById("welcome-overlay");
+  const skipIntroBtn = document.getElementById("skip-intro-btn");
+  const bgMusic = document.getElementById("bg-music");
+  const musicBtn = document.getElementById("music-btn");
+  const volumeSlider = document.getElementById("volume-slider");
+  const volumeLabel = document.getElementById("volume-label");
+  let isMusicOn = true;
+  let currentVolume = 0.35;
+
+  function skipIntro() {
+    if (!welcomeOverlay) return;
+    welcomeOverlay.style.animation = "none";
+    welcomeOverlay.style.opacity = "0";
+    welcomeOverlay.style.pointerEvents = "none";
+  }
+  skipIntroBtn.addEventListener("click", skipIntro);
+  document.addEventListener("keydown", (ev) => {
+    if (!welcomeOverlay || welcomeOverlay.style.pointerEvents === "none") return;
+    if (ev.code === "Space" || ev.code === "Enter") { ev.preventDefault(); skipIntro(); }
+  });
+
+  function showError(msg) {
+    const box = document.getElementById("error-box");
+    box.style.display = "block";
+    box.textContent = msg;
+    setTimeout(() => { box.style.display = "none"; }, 9000);
+  }
+
+  function normalizeText(v) { return (v || "").toString().trim().toLowerCase(); }
+
+  function isMilitary(props) {
+    const name = normalizeText(props.name);
+    if (normalizeText(props.military)) return true;
+    if (normalizeText(props.landuse).includes("military")) return true;
+    return /(tni|militer|rindam|koramil|kodim|korem|kodam|yonif|batalyon|lanud|lanal|markas|pomdam|denpom|puspom|marinir|lantamal|yonmarhanlan)/i.test(name);
+  }
+  function isPolice(props) {
+    const name = normalizeText(props.name);
+    if (/(polisi militer|pomdam|denpom|puspom|\bpm\b)/i.test(name)) return false;
+    const amenity = normalizeText(props.amenity);
+    const office = normalizeText(props.office);
+    return amenity.includes("police") || office.includes("police") ||
+      /(polsek|polres|polda|polresta|polsubsektor|polairud|polisi)/i.test(name);
+  }
+
+  function classify(props) {
+    if (isMilitary(props)) return "military";
+    if (isPolice(props)) return "police";
+    const a = normalizeText(props.amenity);
+    if (a === "hospital" || a === "clinic" || a === "doctors" || a === "dentist" || a === "pharmacy") return "health";
+    if (a === "school" || a === "kindergarten") return "school";
+    if (a === "college" || a === "university") return "higher";
+    if (a === "place_of_worship") return "worship";
+    return null;
+  }
+
+  function polygonCentroid(coords) {
+    const ring = coords && coords[0];
+    if (!ring || !ring.length) return null;
+    let slat = 0, slng = 0, n = 0;
+    for (const pt of ring) {
+      if (!Array.isArray(pt) || pt.length < 2) continue;
+      slng += Number(pt[0]); slat += Number(pt[1]); n++;
+    }
+    if (!n) return null;
+    return [slat / n, slng / n];
+  }
+
+  function featureLatLng(feature) {
+    const g = feature.geometry;
+    if (!g) return null;
+    if (g.type === "Point" && g.coordinates && g.coordinates.length >= 2) {
+      return [g.coordinates[1], g.coordinates[0]];
+    }
+    if (g.type === "Polygon") return polygonCentroid(g.coordinates);
+    if (g.type === "MultiPolygon" && g.coordinates && g.coordinates[0] && g.coordinates[0][0]) {
+      return polygonCentroid(g.coordinates[0]);
+    }
+    return null;
+  }
+
+  function categoryColor(cat) {
+    if (cat === "police") return "#2563eb";
+    if (cat === "military") return "#15803d";
+    if (cat === "health") return "#dc2626";
+    if (cat === "school") return "#ca8a04";
+    if (cat === "higher") return "#7c3aed";
+    if (cat === "worship") return "#4f46e5";
+    return "#64748b";
+  }
+
+  function categoryLabel(cat) {
+    const m = { police: "Polisi", military: "Militer", health: "Kesehatan", school: "Sekolah", higher: "Perguruan tinggi", worship: "Ibadah" };
+    return m[cat] || cat || "-";
+  }
+
+  function filterCatKey(cat) {
+    if (cat === "health") return "health";
+    if (cat === "school") return "school";
+    if (cat === "higher") return "higher";
+    if (cat === "worship") return "worship";
+    if (cat === "police") return "police";
+    if (cat === "military") return "military";
+    return null;
+  }
+
+  function makeIcon(cat) {
+    const c = categoryColor(cat);
+    const label = (cat || "?").charAt(0).toUpperCase();
+    return L.divIcon({
+      className: "",
+      html: `<div style="width:26px;height:26px;border-radius:50%;background:${c};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;font-family:Teko,sans-serif">${label}</div>`,
+      iconSize: [26, 26], iconAnchor: [13, 13]
     });
-    const tileDark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19
+  }
+
+  function getPlaceName(props, idx) {
+    return props.name || props.amenity || props.military || ("Fitur " + (idx + 1));
+  }
+  function getPlaceAddress(props) {
+    return props["addr:full"] || props["addr:street"] || props.address || "-";
+  }
+
+  function osmLink(props) {
+    const id = props.osm_id;
+    const t = normalizeText(props.osm_type);
+    let p = "";
+    if (t.startsWith("node")) p = "node";
+    else if (t.startsWith("way")) p = "way";
+    else if (t.startsWith("relation")) p = "relation";
+    if (!id || !p) return "";
+    return `https://www.openstreetmap.org/${p}/${id}`;
+  }
+
+  function hashU32(id) {
+    const s = String(id || "0");
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  /** Dummy patient load: hospitals skew busier, clinics moderate — deterministic. */
+  function patientLoadBand(props) {
+    const amenity = normalizeText(props.amenity);
+    const h = hashU32(props.osm_id);
+    const roll = h % 100;
+    if (amenity === "hospital") return roll < 72 ? "high" : "low";
+    if (amenity === "clinic" || amenity === "doctors" || amenity === "pharmacy") return roll < 48 ? "high" : "low";
+    return roll < 35 ? "high" : "low";
+  }
+
+  function updateHealthDonut(features) {
+    let high = 0, low = 0;
+    (features || []).forEach((f) => {
+      const p = f.properties || {};
+      const a = normalizeText(p.amenity);
+      if (a !== "hospital" && a !== "clinic" && a !== "doctors" && a !== "dentist" && a !== "pharmacy") return;
+      if (patientLoadBand(p) === "high") high++;
+      else low++;
     });
-    tileDark.addTo(map);
+    const total = high + low;
+    const pctH = total ? Math.round((high / total) * 100) : 0;
+    const pctL = total ? 100 - pctH : 0;
+    const circ = 2 * Math.PI * 34;
+    document.getElementById("pctHigh").textContent = pctH + "%";
+    document.getElementById("pctLow").textContent = pctL + "%";
+    document.getElementById("cntHigh").textContent = "(" + high + ")";
+    document.getElementById("cntLow").textContent = "(" + low + ")";
+    document.getElementById("donutCenterPct").textContent = pctH + "%";
+    const dh = document.getElementById("donutHigh");
+    const dl = document.getElementById("donutLow");
+    const arcH = (pctH / 100) * circ;
+    const arcL = (pctL / 100) * circ;
+    dh.style.strokeDasharray = arcH + " " + (circ - arcH);
+    dh.style.strokeDashoffset = circ / 4;
+    dl.style.strokeDasharray = arcL + " " + (circ - arcL);
+    dl.style.strokeDashoffset = circ / 4 - arcH;
+  }
 
-    const body = document.body;
-    const themeBtn = document.getElementById("theme-btn");
-    const typeFilter = document.getElementById("type-filter");
-    const searchInput = document.getElementById("search-input");
-    const placeListEl = document.getElementById("place-list");
-    const listMetaEl = document.getElementById("list-meta");
-    const actionPanel = document.getElementById("action-panel");
-    const actionTitle = document.getElementById("action-title");
-    const routeModeSelect = document.getElementById("route-mode");
-    const musicBtn = document.getElementById("music-btn");
-    const bgMusic = document.getElementById("bg-music");
-    const volumeSlider = document.getElementById("volume-slider");
-    const volumeLabel = document.getElementById("volume-label");
-    const welcomeOverlay = document.getElementById("welcome-overlay");
-    const skipIntroBtn = document.getElementById("skip-intro-btn");
-
-    let currentLocation = null;
-    let userMarker = null;
-    let routeLine = null;
-    let selectedPlace = null;
-    let allPlaces = [];
-    let isMusicOn = true;
-    let currentVolume = 0.35;
-    const markerLayer = L.layerGroup().addTo(map);
-
-    function makeIcon(color, label) {
-      return L.divIcon({
-        className: "",
-        html: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40"><path d="M16 0C7.16 0 0 7.16 0 16c0 10 16 24 16 24S32 26 32 16C32 7.16 24.84 0 16 0z" fill="${color}"/><circle cx="16" cy="16" r="8" fill="white"/><text x="16" y="20.5" text-anchor="middle" font-size="10" font-weight="700" fill="${color}" font-family="Teko,sans-serif">${label}</text></svg>`,
-        iconSize: [32, 40], iconAnchor: [16, 40], popupAnchor: [0, -35]
-      });
-    }
-    const iconPolice = makeIcon("#2563eb", "POL");
-    const iconMilitary = makeIcon("#16a34a", "MIL");
-
-    function showError(msg) {
-      const box = document.getElementById("error-box");
-      box.style.display = "block";
-      box.innerHTML = msg;
-    }
-    function skipIntro() {
-      if (!welcomeOverlay) return;
-      welcomeOverlay.style.animation = "none";
-      welcomeOverlay.style.opacity = "0";
-      welcomeOverlay.style.pointerEvents = "none";
-    }
-
-    function normalizeText(v) {
-      return (v || "").toString().trim().toLowerCase();
-    }
-    function hasMeaningfulValue(v) {
-      if (v === null || v === undefined) return false;
-      const t = v.toString().trim().toLowerCase();
-      return t !== "" && t !== "null" && t !== "undefined" && t !== "none";
-    }
-
-    function isMilitary(props) {
-      const name = normalizeText(props.name);
-      const amenity = normalizeText(props.amenity);
-      const office = normalizeText(props.office);
-      const militaryTag = normalizeText(props.military);
-      return (
-        hasMeaningfulValue(props.military) ||
-        (militaryTag.length > 0 && militaryTag !== "null") ||
-        normalizeText(props.landuse).includes("military") ||
-        amenity.includes("military") ||
-        office.includes("military") ||
-        /(tni|militer|rindam|koramil|kodim|korem|kodam|yonif|batalyon|lanud|lanal|markas|pomdam|denpom|puspom|polisi militer|pm\b)/i.test(name)
-      );
-    }
-    function isPolice(props) {
-      const name = normalizeText(props.name);
-      const amenity = normalizeText(props.amenity);
-      const office = normalizeText(props.office);
-      if (/(polisi militer|pomdam|denpom|puspom|pm\b)/i.test(name)) return false;
-      return (
-        amenity.includes("police") ||
-        office.includes("police") ||
-        /(polsek|polres|polda|polresta|polsubsektor|polisi(?! militer))/i.test(name)
-      );
-    }
-    function getPlaceType(props) {
-      if (isMilitary(props)) return "military";
-      if (isPolice(props)) return "police";
-      return "police";
-    }
-    function getPlaceName(props, idx) {
-      return props.name || props.amenity || props.military || "Tempat " + (idx + 1);
-    }
-    function getPlaceAddress(props) {
-      return props["addr:full"] || props["addr:street"] || props.address || "-";
-    }
-    function getGeometryCenter(geometry) {
-      if (!geometry || !geometry.type || !geometry.coordinates) return null;
-      const type = geometry.type;
-      const coords = geometry.coordinates;
-      if (type === "Point" && Array.isArray(coords) && coords.length >= 2) {
-        return [coords[1], coords[0]];
+  function buildSimulatedHeat(mode) {
+    if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
+    if (mode === "off") return;
+    const bbox = { south: -0.96, north: -0.78, west: 131.18, east: 131.43 };
+    const center = [-0.876, 131.265];
+    const pts = [];
+    const n = mode === "pop" ? 220 : 160;
+    for (let i = 0; i < n; i++) {
+      let lat, lng, inten;
+      if (mode === "pop") {
+        const bx = bbox.south + Math.random() * (bbox.north - bbox.south);
+        const by = bbox.west + Math.random() * (bbox.east - bbox.west);
+        lat = center[0] + (bx - center[0]) * 0.55 + (Math.random() - 0.5) * 0.035;
+        lng = center[1] + (by - center[1]) * 0.55 + (Math.random() - 0.5) * 0.035;
+        inten = 0.12 + Math.random() * 0.88;
+      } else {
+        const hotspot = i % 9;
+        const hx = bbox.west + ((hotspot * 17) % 100) / 100 * (bbox.east - bbox.west);
+        const hy = bbox.south + ((hotspot * 31) % 100) / 100 * (bbox.north - bbox.south);
+        lat = hy + (Math.random() - 0.5) * 0.028;
+        lng = hx + (Math.random() - 0.5) * 0.028;
+        inten = 0.25 + Math.random() * 0.95;
       }
-      let ring = null;
-      if (type === "Polygon" && Array.isArray(coords[0])) {
-        ring = coords[0];
-      } else if (type === "MultiPolygon" && Array.isArray(coords[0]) && Array.isArray(coords[0][0])) {
-        ring = coords[0][0];
+      lat = Math.max(bbox.south, Math.min(bbox.north, lat));
+      lng = Math.max(bbox.west, Math.min(bbox.east, lng));
+      pts.push([lat, lng, inten]);
+    }
+    const grad = mode === "pop"
+      ? { 0.15: "#0ea5e9", 0.45: "#22c55e", 0.75: "#eab308", 1: "#ef4444" }
+      : { 0.2: "#fde047", 0.5: "#fb923c", 0.8: "#dc2626", 1: "#7f1d1d" };
+    heatLayer = L.heatLayer(pts, { radius: mode === "pop" ? 22 : 26, blur: 18, maxZoom: 17, max: 1.0, gradient: grad }).addTo(map);
+  }
+
+  document.getElementById("heat-mode").addEventListener("change", (e) => {
+    currentHeatMode = e.target.value;
+    buildSimulatedHeat(currentHeatMode);
+  });
+
+  function syncLayerVisibility() {
+    const am = document.getElementById("ly-amenity").checked;
+    const bd = document.getElementById("ly-building").checked;
+    const rd = document.getElementById("ly-road").checked;
+    const bo = document.getElementById("ly-boundary").checked;
+    if (am) { if (!map.hasLayer(amenityCluster)) map.addLayer(amenityCluster); }
+    else if (map.hasLayer(amenityCluster)) map.removeLayer(amenityCluster);
+    if (bd) { if (!map.hasLayer(buildingLayer)) map.addLayer(buildingLayer); }
+    else if (map.hasLayer(buildingLayer)) map.removeLayer(buildingLayer);
+    if (bo) { if (!map.hasLayer(boundaryLayer)) map.addLayer(boundaryLayer); }
+    else if (map.hasLayer(boundaryLayer)) map.removeLayer(boundaryLayer);
+    if (rd) { if (!map.hasLayer(transportOverlay)) transportOverlay.addTo(map); }
+    else if (map.hasLayer(transportOverlay)) map.removeLayer(transportOverlay);
+  }
+  ["ly-amenity", "ly-building", "ly-road", "ly-boundary"].forEach((id) => {
+    document.getElementById(id).addEventListener("change", syncLayerVisibility);
+  });
+
+  function readAmenityFilters() {
+    document.querySelectorAll(".amen-filter").forEach((el) => {
+      const k = el.getAttribute("data-cat");
+      filterCats[k] = el.checked;
+    });
+  }
+
+  function passesAmenityFilter(cat) {
+    const fk = filterCatKey(cat);
+    if (!fk) return false;
+    return filterCats[fk];
+  }
+
+  const actionPanel = document.getElementById("action-panel");
+  const actionTitle = document.getElementById("action-title");
+
+  function openActionPanel(rec) {
+    selectedPlace = rec;
+    actionTitle.textContent = rec.name;
+    actionPanel.style.display = "block";
+  }
+
+  function renderFromData() {
+    amenityCluster.clearLayers();
+    buildingLayer.clearLayers();
+    allRecords = [];
+
+    const features = (geoData && geoData.features) || [];
+    const buildingFeats = [];
+    features.forEach((f, idx) => {
+      const p = f.properties || {};
+      const cat = classify(p);
+      const ll = featureLatLng(f);
+      if (f.geometry && f.geometry.type === "Polygon" && p.building && normalizeText(p.building) !== "no") {
+        buildingFeats.push(f);
       }
-      if (!ring || ring.length === 0) return null;
-      let sumLat = 0;
-      let sumLng = 0;
-      let valid = 0;
-      ring.forEach((pt) => {
-        if (Array.isArray(pt) && pt.length >= 2) {
-          sumLng += Number(pt[0]);
-          sumLat += Number(pt[1]);
-          valid += 1;
-        }
-      });
-      if (!valid) return null;
-      return [sumLat / valid, sumLng / valid];
+      if (!cat || !ll) return;
+      if (!passesAmenityFilter(cat)) return;
+      const name = getPlaceName(p, idx);
+      const rec = { name, cat, address: getPlaceAddress(p), coords: ll, props: p, feature: f };
+      allRecords.push(rec);
+      const marker = L.marker(ll, { icon: makeIcon(cat) });
+      const olink = osmLink(p);
+      const extraHealth =
+        cat === "health"
+          ? `<div class="info-row"><span>Beban pasien (simulasi)</span><span>${patientLoadBand(p) === "high" ? "Tinggi" : "Rendah"}</span></div>`
+          : "";
+      marker.bindPopup(
+        `<div style="min-width:200px;font-size:12px;">` +
+        `<strong>${name}</strong><br/><span style="color:#94a3b8">${categoryLabel(cat)}</span>` +
+        `<div style="margin-top:6px;">${rec.address}</div>${extraHealth}` +
+        (olink ? `<div style="margin-top:8px"><a href="${olink}" target="_blank" rel="noopener">OSM</a></div>` : "") +
+        `</div>`
+      );
+      marker.on("click", () => openActionPanel(rec));
+      rec.marker = marker;
+      amenityCluster.addLayer(marker);
+    });
+    if (buildingFeats.length) buildingLayer.addData({ type: "FeatureCollection", features: buildingFeats });
+
+    let cHealth = 0, cSchool = 0, cWorship = 0, cPol = 0, cMil = 0;
+    features.forEach((f) => {
+      const t = classify(f.properties || {});
+      if (t === "health") cHealth++;
+      if (t === "school") cSchool++;
+      if (t === "worship") cWorship++;
+      if (t === "police") cPol++;
+      if (t === "military") cMil++;
+    });
+    document.getElementById("st-total").textContent = String(features.length);
+    document.getElementById("st-health").textContent = String(cHealth);
+    document.getElementById("st-edu").textContent = String(
+      features.filter((f) => ["school", "college", "university"].includes(normalizeText((f.properties || {}).amenity))).length
+    );
+    document.getElementById("st-worship").textContent = String(cWorship);
+    document.getElementById("st-police").textContent = String(cPol);
+    document.getElementById("st-mil").textContent = String(cMil);
+
+    updateHealthDonut(features);
+    syncLayerVisibility();
+    buildSimulatedHeat(currentHeatMode);
+
+    document.getElementById("load-status").textContent =
+      amenityCluster.getLayers().length + " marker amenitas · " + buildingLayer.getLayers().length + " bangunan";
+  }
+
+  document.getElementById("apply-filter").addEventListener("click", () => {
+    readAmenityFilters();
+    renderFromData();
+  });
+  document.getElementById("reset-filter").addEventListener("click", () => {
+    document.querySelectorAll(".amen-filter").forEach((el) => { el.checked = true; });
+    readAmenityFilters();
+    renderFromData();
+  });
+
+  async function loadBoundary() {
+    const r = await fetch("data/clipping_boundary.geojson");
+    if (!r.ok) return;
+    const raw = await r.json();
+    const geom = raw.type === "FeatureCollection" ? raw : { type: "Feature", properties: {}, geometry: raw };
+    boundaryLayer.clearLayers();
+    boundaryLayer.addData(geom);
+  }
+
+  async function loadMainGeojson() {
+    const resp = await fetch("data/sorong.geojson");
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    geoData = await resp.json();
+    await loadBoundary().catch(() => {});
+    readAmenityFilters();
+    renderFromData();
+    const group = L.featureGroup([amenityCluster, buildingLayer, boundaryLayer]);
+    try {
+      map.fitBounds(group.getBounds(), { padding: [24, 24] });
+    } catch (_) {
+      map.setView([-0.87, 131.27], 12);
     }
+  }
 
-    function updateStats(filtered) {
-      const policeCount = filtered.filter((p) => p.type === "police").length;
-      const militaryCount = filtered.filter((p) => p.type === "military").length;
-      document.getElementById("count-all").textContent = String(filtered.length);
-      document.getElementById("count-police").textContent = String(policeCount);
-      document.getElementById("count-military").textContent = String(militaryCount);
-    }
+  function searchLocal(q) {
+    const qq = normalizeText(q);
+    if (qq.length < 2) return [];
+    return allRecords
+      .filter((r) => normalizeText(r.name).includes(qq))
+      .slice(0, 10)
+      .map((r) => ({ name: r.name, category: categoryLabel(r.cat), lat: r.coords[0], lng: r.coords[1], rec: r }));
+  }
 
-    function openActionPanel(place) {
-      selectedPlace = place;
-      actionTitle.textContent = place.name;
-      actionPanel.style.display = "block";
-    }
-
-    function renderMarkersAndList() {
-      markerLayer.clearLayers();
-      placeListEl.innerHTML = "";
-
-      const selectedType = typeFilter.value;
-      const keyword = normalizeText(searchInput.value);
-      const filtered = allPlaces.filter((p) => {
-        const typeOk = selectedType === "all" || p.type === selectedType;
-        const searchOk = !keyword || normalizeText(p.name).includes(keyword);
-        return typeOk && searchOk;
-      });
-
-      filtered.forEach((place) => {
-        const marker = L.marker(place.coords, { icon: place.type === "police" ? iconPolice : iconMilitary }).addTo(markerLayer);
-        marker.bindPopup(`<strong>${place.name}</strong><br>${place.type === "police" ? "Pos Polisi" : "Pos Militer"}<br>${place.address}`);
-        marker.on("click", () => openActionPanel(place));
-        place.marker = marker;
-
-        const li = document.createElement("li");
-        li.className = "place-item";
-        li.innerHTML = `<div class="place-label"><span class="place-name">${place.name}</span><span class="place-type">${place.type === "police" ? "🚓 Pos Polisi" : "🪖 Pos Militer"}</span></div><button class="place-go">Lihat</button>`;
-        li.querySelector(".place-go").addEventListener("click", () => {
-          map.flyTo(place.coords, 16, { duration: 0.8 });
-          marker.openPopup();
-          openActionPanel(place);
+  const searchInput = document.getElementById("search-input");
+  const sugg = document.getElementById("search-suggestions");
+  let deb;
+  searchInput.addEventListener("input", () => {
+    clearTimeout(deb);
+    const v = searchInput.value.trim();
+    if (v.length < 2) { sugg.classList.remove("visible"); return; }
+    deb = setTimeout(() => {
+      const items = searchLocal(v);
+      sugg.innerHTML = items.length
+        ? items.map((it) => {
+            const esc = it.name.replace(/"/g, "&quot;");
+            return `<div class="sugg-item" data-name="${esc}" data-lat="${it.lat}" data-lng="${it.lng}"><strong>${it.name}</strong><br/><small>${it.category}</small></div>`;
+          }).join("")
+        : `<div class="sugg-item">Tidak ada hasil</div>`;
+      sugg.querySelectorAll(".sugg-item").forEach((el) => {
+        if (!el.dataset.name) return;
+        el.addEventListener("mousedown", (ev) => {
+          ev.preventDefault();
+          const lat = parseFloat(el.dataset.lat);
+          const lng = parseFloat(el.dataset.lng);
+          const nm = el.dataset.name;
+          map.setView([lat, lng], 17);
+          const hit = allRecords.find((r) => r.name === nm);
+          if (hit && hit.marker) {
+            amenityCluster.zoomToShowLayer(hit.marker, () => hit.marker.openPopup());
+            openActionPanel(hit);
+          }
+          sugg.classList.remove("visible");
         });
-        placeListEl.appendChild(li);
       });
+      sugg.classList.add("visible");
+    }, 280);
+  });
+  document.getElementById("search-btn").addEventListener("click", () => {
+    const items = searchLocal(searchInput.value);
+    sugg.classList.remove("visible");
+    if (items[0]) map.setView([items[0].lat, items[0].lng], 16);
+  });
 
-      listMetaEl.textContent = filtered.length + " tempat tampil";
-      updateStats(filtered);
-    }
+  map.on("mousemove", (e) => {
+    document.getElementById("coordLat").textContent = e.latlng.lat.toFixed(5);
+    document.getElementById("coordLng").textContent = e.latlng.lng.toFixed(5);
+    document.getElementById("coordZoom").textContent = String(map.getZoom());
+  });
 
-    function setTheme(nextTheme) {
-      body.classList.toggle("light", nextTheme === "light");
-      if (nextTheme === "light") {
-        if (map.hasLayer(tileDark)) map.removeLayer(tileDark);
-        if (!map.hasLayer(tileLight)) tileLight.addTo(map);
-        themeBtn.textContent = "Dark Mode";
-      } else {
-        if (map.hasLayer(tileLight)) map.removeLayer(tileLight);
-        if (!map.hasLayer(tileDark)) tileDark.addTo(map);
-        themeBtn.textContent = "Light Mode";
-      }
-      localStorage.setItem("webgis_theme", nextTheme);
+  document.getElementById("theme-btn").addEventListener("click", () => {
+    const light = !body.classList.contains("theme-light");
+    body.classList.toggle("theme-light", light);
+    document.getElementById("theme-btn").textContent = light ? "Dark" : "Light";
+    if (light) {
+      map.removeLayer(dark); road.addTo(map);
+    } else {
+      map.removeLayer(road); dark.addTo(map);
     }
+    localStorage.setItem("webgis_sorong_theme", light ? "light" : "dark");
+  });
 
-    themeBtn.addEventListener("click", () => {
-      const nowLight = body.classList.contains("light");
-      setTheme(nowLight ? "dark" : "light");
-    });
-    function updateMusicButton() {
-      musicBtn.textContent = isMusicOn ? "🔊 Musik: ON" : "🔈 Musik: OFF";
-    }
-    function applyVolumeUI() {
-      const pct = Math.round(currentVolume * 100);
-      volumeSlider.value = String(pct);
-      volumeLabel.textContent = `${pct}%`;
-    }
-    function tryPlayMusic() {
-      if (!isMusicOn) return;
-      bgMusic.volume = currentVolume;
-      bgMusic.play().catch(() => {
-        musicBtn.textContent = "▶ Klik untuk putar musik";
-      });
-    }
-    function setMusicEnabled(enabled) {
-      isMusicOn = enabled;
-      if (isMusicOn) {
-        updateMusicButton();
-        tryPlayMusic();
-      } else {
-        bgMusic.pause();
-        updateMusicButton();
-      }
-      localStorage.setItem("webgis_music_on", isMusicOn ? "1" : "0");
-    }
-    musicBtn.addEventListener("click", () => {
-      if (musicBtn.textContent.includes("Klik untuk putar")) {
-        setMusicEnabled(true);
-        return;
-      }
-      setMusicEnabled(!isMusicOn);
-    });
-    volumeSlider.addEventListener("input", () => {
-      const v = Number(volumeSlider.value) / 100;
-      currentVolume = Number.isFinite(v) ? v : 0.35;
-      bgMusic.volume = currentVolume;
-      applyVolumeUI();
-      localStorage.setItem("webgis_music_volume", String(currentVolume));
-    });
-    document.addEventListener("pointerdown", tryPlayMusic, { once: true });
-    if (skipIntroBtn) {
-      skipIntroBtn.addEventListener("click", skipIntro);
-    }
-    document.addEventListener("keydown", (ev) => {
-      if (!welcomeOverlay || welcomeOverlay.style.pointerEvents === "none") return;
-      if (ev.code === "Space" || ev.code === "Enter") {
-        ev.preventDefault();
-        skipIntro();
-      }
-    });
+  let panelExpanded = true;
+  document.getElementById("panel-toggle").addEventListener("click", () => {
+    panelExpanded = !panelExpanded;
+    document.getElementById("loadPanel").classList.toggle("collapsed", !panelExpanded);
+    document.getElementById("panel-toggle").textContent = panelExpanded ? "Ringkas" : "Expand";
+  });
 
-    function setUserLocation(coords) {
-      currentLocation = [coords.latitude, coords.longitude];
-      if (!userMarker) {
-        userMarker = L.circleMarker(currentLocation, {
-          radius: 8, color: "#f59e0b", fillColor: "#f59e0b", fillOpacity: 0.85
-        }).addTo(map).bindPopup("Posisi Anda");
-      } else {
-        userMarker.setLatLng(currentLocation);
+  document.querySelectorAll(".map-style-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const style = btn.getAttribute("data-style");
+      document.querySelectorAll(".map-style-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      map.removeLayer(road); map.removeLayer(dark); map.removeLayer(satellite); map.removeLayer(hybridLabels);
+      if (style === "sat") satellite.addTo(map);
+      else if (style === "hybrid") { satellite.addTo(map); hybridLabels.addTo(map); }
+      else {
+        if (body.classList.contains("theme-light")) road.addTo(map);
+        else dark.addTo(map);
       }
-      map.flyTo(currentLocation, 14, { duration: 0.8 });
+      if (document.getElementById("ly-road").checked && !map.hasLayer(transportOverlay)) transportOverlay.addTo(map);
+    });
+  });
+
+  document.getElementById("gps-btn").addEventListener("click", () => {
+    if (!navigator.geolocation) { showError("Geolocation tidak didukung."); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        currentLocation = [pos.coords.latitude, pos.coords.longitude];
+        if (!userMarker) userMarker = L.circleMarker(currentLocation, { radius: 8, color: "#f59e0b", fillColor: "#f59e0b", fillOpacity: 0.9 }).addTo(map);
+        else userMarker.setLatLng(currentLocation);
+        userMarker.bindPopup("Posisi Anda").openPopup();
+        map.flyTo(currentLocation, 14);
+      },
+      () => showError("Gagal GPS — izinkan lokasi."),
+      { enableHighAccuracy: true, timeout: 12000 }
+    );
+  });
+
+  function clearRoute() {
+    if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+  }
+  document.getElementById("btn-cancel-route").addEventListener("click", clearRoute);
+  document.getElementById("btn-detail").addEventListener("click", () => {
+    if (selectedPlace && selectedPlace.marker) selectedPlace.marker.openPopup();
+  });
+  document.getElementById("btn-focus").addEventListener("click", () => {
+    if (selectedPlace) map.flyTo(selectedPlace.coords, 17);
+  });
+  document.getElementById("btn-route").addEventListener("click", async () => {
+    if (!selectedPlace) return;
+    if (!currentLocation) { showError("Aktifkan GPS terlebih dahulu."); return; }
+    const [lat1, lon1] = currentLocation;
+    const [lat2, lon2] = selectedPlace.coords;
+    const mode = document.getElementById("route-mode").value;
+    clearRoute();
+    try {
+      const profile = mode === "walking" ? "foot" : "driving";
+      const url = `https://router.project-osrm.org/route/v1/${profile}/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
+      const res = await fetch(url);
+      const json = await res.json();
+      if (!json.routes || !json.routes[0]) throw new Error("empty");
+      const c = json.routes[0].geometry.coordinates.map((x) => [x[1], x[0]]);
+      routeLine = L.polyline(c, { color: "#f59e0b", weight: 5 }).addTo(map);
+      map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+    } catch (_) {
+      window.open(`https://www.google.com/maps/dir/?api=1&origin=${lat1},${lon1}&destination=${lat2},${lon2}&travelmode=driving`, "_blank");
     }
-    function clearRoute() {
-      if (routeLine) {
-        map.removeLayer(routeLine);
-        routeLine = null;
-      }
-    }
+  });
 
-    document.getElementById("gps-btn").addEventListener("click", () => {
-      if (!navigator.geolocation) {
-        showError("Browser tidak mendukung GPS.");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation(pos.coords),
-        () => showError("Gagal mendapatkan lokasi GPS. Izinkan akses lokasi."),
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
+  document.getElementById("fab-fit").addEventListener("click", () => {
+    const g = L.featureGroup([amenityCluster, buildingLayer, boundaryLayer]);
+    try { map.fitBounds(g.getBounds(), { padding: [30, 30] }); } catch (_) {}
+  });
+  document.getElementById("fab-full").addEventListener("click", () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  });
+  document.getElementById("fab-csv").addEventListener("click", () => {
+    const rows = [["nama", "kategori", "amenity", "lat", "lng", "osm_id", "beban_pasien_simulasi"]];
+    allRecords.forEach((r) => {
+      const a = (r.props.amenity || "").toString();
+      const band = ["hospital", "clinic", "doctors", "dentist", "pharmacy"].includes(normalizeText(a)) ? patientLoadBand(r.props) : "";
+      rows.push([r.name, categoryLabel(r.cat), a, r.coords[0], r.coords[1], r.props.osm_id || "", band]);
     });
+    const csv = rows.map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const u = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = u; a.download = "webgis_sorong_amenitas.csv"; a.click();
+    URL.revokeObjectURL(u);
+  });
 
-    function openGoogleRoute(lat1, lon1, lat2, lon2, mode) {
-      const modeMap = {
-        driving: "driving",
-        motorcycle: "driving",
-        walking: "walking",
-        train: "transit",
-        plane: "flying"
-      };
-      const travelmode = modeMap[mode] || "driving";
-      window.open(`https://www.google.com/maps/dir/?api=1&origin=${lat1},${lon1}&destination=${lat2},${lon2}&travelmode=${travelmode}`, "_blank");
-    }
-    async function drawRouteToPlace(place, mode) {
-      if (!currentLocation) {
-        showError("Lokasi Anda belum aktif. Klik tombol 'Gunakan GPS Saya' terlebih dulu.");
-        return;
-      }
-      const [lat1, lon1] = currentLocation;
-      const [lat2, lon2] = place.coords;
-      clearRoute();
-      if (mode === "train" || mode === "plane") {
-        openGoogleRoute(lat1, lon1, lat2, lon2, mode);
-        return;
-      }
-      try {
-        const osrmProfile = mode === "walking" ? "foot" : "driving";
-        const url = `https://router.project-osrm.org/route/v1/${osrmProfile}/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("route request failed");
-        const json = await res.json();
-        if (!json.routes || !json.routes[0]) throw new Error("route empty");
-        const routeCoords = json.routes[0].geometry.coordinates.map((c) => [c[1], c[0]]);
-        routeLine = L.polyline(routeCoords, { color: "#f59e0b", weight: 5, opacity: 0.9 }).addTo(map);
-        map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
-      } catch (err) {
-        openGoogleRoute(lat1, lon1, lat2, lon2, mode);
-      }
-    }
+  function updateMusicButton() { musicBtn.textContent = isMusicOn ? "🔊 Musik" : "🔈 Musik"; }
+  function tryPlayMusic() {
+    if (!isMusicOn) return;
+    bgMusic.volume = currentVolume;
+    bgMusic.play().catch(() => { musicBtn.textContent = "▶ Putar"; });
+  }
+  musicBtn.addEventListener("click", () => {
+    if (musicBtn.textContent.includes("Putar")) { isMusicOn = true; updateMusicButton(); tryPlayMusic(); return; }
+    isMusicOn = !isMusicOn;
+    if (isMusicOn) tryPlayMusic(); else bgMusic.pause();
+    updateMusicButton();
+  });
+  volumeSlider.addEventListener("input", () => {
+    currentVolume = Number(volumeSlider.value) / 100;
+    bgMusic.volume = currentVolume;
+    volumeLabel.textContent = Math.round(currentVolume * 100) + "%";
+  });
+  document.addEventListener("pointerdown", tryPlayMusic, { once: true });
 
-    document.getElementById("btn-detail").addEventListener("click", () => {
-      if (!selectedPlace) return;
-      selectedPlace.marker.openPopup();
-    });
-    document.getElementById("btn-focus").addEventListener("click", () => {
-      if (!selectedPlace) return;
-      map.flyTo(selectedPlace.coords, 17, { duration: 0.8 });
-    });
-    document.getElementById("btn-route").addEventListener("click", () => {
-      if (!selectedPlace) return;
-      drawRouteToPlace(selectedPlace, routeModeSelect.value);
-    });
-    document.getElementById("btn-cancel-route").addEventListener("click", () => {
-      clearRoute();
-    });
+  (async () => {
+    try {
+      const isVercelHost = window.location.hostname.includes("vercel.app");
+      if (!isVercelHost && welcomeOverlay) welcomeOverlay.style.display = "none";
+      if (localStorage.getItem("webgis_sorong_theme") === "light") document.getElementById("theme-btn").click();
 
-    typeFilter.addEventListener("change", renderMarkersAndList);
-    searchInput.addEventListener("input", renderMarkersAndList);
+      await loadMainGeojson();
+      syncLayerVisibility();
 
-    async function loadPlaces() {
-      const resp = await fetch("data/Pos_Polisi_dan_Militer.geojson");
-      if (!resp.ok) throw new Error("HTTP " + resp.status);
-      const data = await resp.json();
-      allPlaces = (data.features || [])
-        .map((f, idx) => {
-          const props = f.properties || {};
-          const coords = getGeometryCenter(f.geometry);
-          if (!coords) return null;
-          const type = getPlaceType(props);
-          return { id: idx, name: getPlaceName(props, idx), type, address: getPlaceAddress(props), coords, props, marker: null };
-        })
-        .filter(Boolean);
-      renderMarkersAndList();
+      document.getElementById("loading").classList.add("hidden");
+      updateMusicButton();
+      tryPlayMusic();
+    } catch (err) {
+      console.error(err);
+      showError("Gagal memuat data/sorong.geojson atau batas wilayah.");
       document.getElementById("loading").classList.add("hidden");
     }
-
-    (async () => {
-      try {
-        const isVercelHost = window.location.hostname.includes("vercel.app");
-        if (!isVercelHost) {
-          const splash = document.getElementById("welcome-overlay");
-          if (splash) splash.style.display = "none";
-        }
-        const savedTheme = localStorage.getItem("webgis_theme") || "dark";
-        isMusicOn = localStorage.getItem("webgis_music_on") !== "0";
-        const savedVolume = Number(localStorage.getItem("webgis_music_volume"));
-        if (Number.isFinite(savedVolume) && savedVolume >= 0 && savedVolume <= 1) {
-          currentVolume = savedVolume;
-        }
-        applyVolumeUI();
-        updateMusicButton();
-        tryPlayMusic();
-        setTheme(savedTheme);
-        await loadPlaces();
-      } catch (err) {
-        showError("Gagal memuat data GeoJSON. Pastikan file data/Pos_Polisi_dan_Militer.geojson tersedia.");
-        document.getElementById("loading").classList.add("hidden");
-      }
-    })();
+  })();
+})();
   </script>
 </body>
 </html>
