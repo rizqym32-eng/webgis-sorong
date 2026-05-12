@@ -31,6 +31,12 @@
       --muted: #475569;
       --accent: #d97706;
       --chip: #e2e8f0;
+      --scroll-track: rgba(15, 23, 42, 0.06);
+      --scroll-thumb: rgba(71, 85, 105, 0.45);
+    }
+    body:not(.theme-light) {
+      --scroll-track: rgba(255, 255, 255, 0.06);
+      --scroll-thumb: rgba(148, 163, 184, 0.4);
     }
     body { background: var(--bg); color: var(--text); }
 
@@ -118,17 +124,44 @@
       border: 1px solid var(--panel-border); background: var(--chip); color: var(--text);
       border-radius: 8px; font-size: 11px; font-weight: 600; padding: 5px 8px; cursor: pointer;
     }
-    .panel-scroll { overflow-y: auto; padding: 10px 12px 12px; flex: 1; min-height: 0; }
-    .search-row { display: flex; gap: 6px; margin-bottom: 8px; position: relative; }
-    .search-input-wrap { flex: 1; position: relative; }
+    .panel-scroll {
+      overflow-y: auto; padding: 10px 12px 12px; flex: 1; min-height: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+    }
+    .panel-scroll::-webkit-scrollbar,
+    .search-suggestions::-webkit-scrollbar {
+      width: 8px; height: 8px;
+    }
+    .panel-scroll::-webkit-scrollbar-track,
+    .search-suggestions::-webkit-scrollbar-track {
+      background: var(--scroll-track); border-radius: 8px;
+    }
+    .panel-scroll::-webkit-scrollbar-thumb,
+    .search-suggestions::-webkit-scrollbar-thumb {
+      background: var(--scroll-thumb); border-radius: 8px;
+      border: 2px solid transparent; background-clip: padding-box;
+    }
+    .search-row { display: flex; gap: 6px; margin-bottom: 8px; position: relative; align-items: stretch; }
+    .search-input-wrap { flex: 1; position: relative; min-width: 0; }
     .search-input {
-      width: 100%; border: 1px solid var(--panel-border); border-radius: 10px; padding: 8px 10px;
+      width: 100%; border: 1px solid var(--panel-border); border-radius: 10px; padding: 8px 32px 8px 10px;
       font-size: 12px; background: transparent; color: var(--text);
     }
+    .search-clear {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      width: 24px; height: 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; line-height: 1;
+      display: none; align-items: center; justify-content: center;
+      background: var(--chip); color: var(--muted);
+    }
+    .search-clear:hover { color: var(--text); background: var(--panel-border); }
+    .search-input-wrap.has-text .search-clear { display: flex; }
     .search-btn { border: 0; border-radius: 10px; background: var(--accent); color: #111; font-weight: 700; padding: 8px 10px; cursor: pointer; font-size: 12px; }
     .search-suggestions {
       position: absolute; top: 100%; left: 0; right: 0; background: var(--panel); border: 1px solid var(--panel-border);
       border-top: none; border-radius: 0 0 10px 10px; max-height: 200px; overflow-y: auto; display: none; z-index: 2000;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scroll-thumb) var(--scroll-track);
     }
     .search-suggestions.visible { display: block; }
     .sugg-item { padding: 8px 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid var(--panel-border); }
@@ -188,6 +221,22 @@
       width: 100%; border: 1px solid var(--panel-border); border-radius: 8px; padding: 8px; font-size: 12px;
       background: var(--chip); color: var(--text);
     }
+    input[type="range"]#volume-slider {
+      width: 72px; height: 6px; border-radius: 99px; background: var(--scroll-track);
+      appearance: none; -webkit-appearance: none;
+    }
+    input[type="range"]#volume-slider::-webkit-slider-thumb {
+      appearance: none; width: 14px; height: 14px; border-radius: 50%;
+      background: var(--accent); border: 2px solid var(--panel); cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+    input[type="range"]#volume-slider::-moz-range-thumb {
+      width: 14px; height: 14px; border-radius: 50%; border: 0;
+      background: var(--accent); cursor: pointer;
+    }
+    input[type="range"]#volume-slider::-moz-range-track {
+      height: 6px; border-radius: 99px; background: var(--scroll-track);
+    }
     .helper-note { font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.35; }
 
     .fab-col { position: absolute; z-index: 1100; right: 12px; bottom: 42px; display: flex; flex-direction: column; gap: 8px; }
@@ -221,21 +270,32 @@
     .leaflet-popup-content-wrapper, .leaflet-popup-tip {
       background: var(--panel) !important; color: var(--text) !important; border: 1px solid var(--panel-border) !important;
     }
-
-    #action-panel {
-      position: absolute; left: 12px; bottom: 42px; z-index: 1100; width: 260px;
-      border-radius: 10px; border: 1px solid var(--panel-border); background: var(--panel); padding: 10px; display: none;
+    .leaflet-popup-action-pane .leaflet-popup-content { margin: 10px 12px !important; min-width: 220px; max-width: 280px; }
+    .leaflet-popup-action-pane .leaflet-popup-tip { background: var(--panel) !important; }
+    .pap-title { font-weight: 700; font-size: 14px; color: var(--text); line-height: 1.25; margin-bottom: 4px; }
+    .pap-sub { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+    .pap-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; align-items: center; }
+    .pap-btn {
+      flex: 1; min-width: 88px; border: 1px solid var(--panel-border); background: var(--chip); color: var(--text);
+      border-radius: 8px; padding: 7px 8px; font-size: 11px; font-weight: 600; cursor: pointer;
     }
-    .action-title { font-weight: 600; margin-bottom: 8px; font-size: 13px; }
-    .route-mode-select { width: 100%; margin-bottom: 8px; border: 1px solid var(--panel-border); background: var(--chip); color: var(--text); border-radius: 8px; padding: 6px; font-size: 12px; }
-    .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .action-buttons button {
-      border: 1px solid var(--panel-border); background: var(--chip); color: var(--text); border-radius: 8px; padding: 7px; cursor: pointer; font-size: 11px;
+    .pap-btn:hover { filter: brightness(1.08); }
+    .pap-link {
+      font-size: 11px; font-weight: 600; color: #38bdf8; text-decoration: none; white-space: nowrap;
     }
+    body.theme-light .pap-link { color: #0369a1; }
+    .pap-link:hover { text-decoration: underline; }
+    .pap-detail {
+      display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--panel-border);
+      font-size: 11px; line-height: 1.45; color: var(--text);
+    }
+    .pap-detail.visible { display: block; }
+    .pap-coords { font-family: Consolas, monospace; font-size: 10px; color: var(--muted); margin: 8px 0; word-break: break-all; }
+    .amenity-marker-wrap { background: none !important; border: none !important; }
+    .amenity-marker-icon svg { display: block; }
 
     #bg-music-wrap { position: absolute; z-index: 1100; right: 12px; top: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
     .music-compact { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; padding: 6px 8px; font-size: 11px; }
-    #volume-slider { width: 72px; accent-color: var(--accent); }
 
     .legend {
       position: absolute; z-index: 1000; bottom: 42px; left: 50%; transform: translateX(-50%);
@@ -295,8 +355,9 @@
     </div>
     <div class="panel-scroll">
       <div class="search-row">
-        <div class="search-input-wrap">
+        <div class="search-input-wrap" id="search-wrap">
           <input id="search-input" class="search-input" type="text" placeholder="Cari nama fasilitas..." autocomplete="off" />
+          <button type="button" class="search-clear" id="search-clear" title="Hapus">×</button>
           <div id="search-suggestions" class="search-suggestions"></div>
         </div>
         <button type="button" class="search-btn" id="search-btn">Cari</button>
@@ -357,9 +418,9 @@
           <label><input type="checkbox" id="ly-amenity" checked /> Amenitas (titik)</label>
           <label><input type="checkbox" id="ly-building" checked /> Bangunan</label>
           <label><input type="checkbox" id="ly-road" /> Overlay jalan (Esri)</label>
-          <label><input type="checkbox" id="ly-boundary" checked /> Batas wilayah (clip)</label>
+          <label><input type="checkbox" id="ly-boundary" checked /> Batas wilayah</label>
         </div>
-        <p class="helper-note">GeoJSON Sorong tidak berisi garis jalan vektor; overlay menampilkan jaringan jalan referensi.</p>
+        <p class="helper-note">Batas diambil dari basis data OpenStreetMap (layer yang sama dipakai Google Maps untuk wilayah). Jika gagal dimuat, dipakai file cadangan <code>clipping_boundary.geojson</code>. Heatmap simulasi hanya digambar di area daratan dalam batas tersebut.</p>
       </div>
 
       <div class="filter-card">
@@ -405,21 +466,6 @@
     <span>Zoom:</span> <b id="coordZoom">13</b>
   </div>
 
-  <div id="action-panel">
-    <div class="action-title" id="action-title">Pilih aksi</div>
-    <select id="route-mode" class="route-mode-select">
-      <option value="driving">Mobil</option>
-      <option value="motorcycle">Motor</option>
-      <option value="walking">Jalan kaki</option>
-    </select>
-    <div class="action-buttons">
-      <button type="button" id="btn-detail">Detail</button>
-      <button type="button" id="btn-focus">Fokus</button>
-      <button type="button" id="btn-route">Rute</button>
-      <button type="button" id="btn-cancel-route">Hapus rute</button>
-    </div>
-  </div>
-
   <div id="error-box" class="error-box"></div>
 
   <audio id="bg-music" loop preload="auto">
@@ -456,16 +502,22 @@
     })
   });
   const boundaryLayer = L.geoJSON(null, {
-    style: { color: "#f59e0b", weight: 3, fillOpacity: 0, dashArray: "6 4" }
+    style: {
+      color: "#38bdf8",
+      weight: 2.5,
+      opacity: 0.95,
+      fillColor: "#0ea5e9",
+      fillOpacity: 0.08,
+      dashArray: null
+    }
   });
 
   let heatLayer = null;
   let currentHeatMode = "off";
   let allRecords = [];
   let geoData = null;
-  let selectedPlace = null;
+  let landClipGeojson = null;
   let userMarker = null;
-  let routeLine = null;
   let currentLocation = null;
   const filterCats = { health: true, school: true, higher: true, worship: true, police: true, military: true };
 
@@ -576,14 +628,189 @@
     return null;
   }
 
-  function makeIcon(cat) {
-    const c = categoryColor(cat);
-    const label = (cat || "?").charAt(0).toUpperCase();
+  const actionPopup = L.popup({
+    className: "leaflet-popup-action-pane amenity-action-popup",
+    maxWidth: 300,
+    autoPan: true,
+    autoPanPadding: [80, 80],
+    closeButton: true,
+    offset: L.point(0, -14)
+  });
+
+  function escHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function flyToSmooth(latlng, zoom) {
+    map.flyTo(latlng, zoom, { duration: 1.15, easeLinearity: 0.22 });
+  }
+
+  function pointInRing(lat, lng, ring) {
+    if (!ring || ring.length < 3) return false;
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0];
+      const yi = ring[i][1];
+      const xj = ring[j][0];
+      const yj = ring[j][1];
+      const inter = (yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi + 1e-12) + xi;
+      if (inter) inside = !inside;
+    }
+    return inside;
+  }
+
+  function pointInLandGeojson(lat, lng, gj) {
+    if (!gj) return true;
+    if (gj.type === "Polygon") return pointInRing(lat, lng, gj.coordinates[0]);
+    if (gj.type === "MultiPolygon") {
+      for (const poly of gj.coordinates) {
+        if (poly && poly[0] && pointInRing(lat, lng, poly[0])) return true;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  /** Fallback urban core (daratan Sorong) bila batas administrasi gagal dimuat */
+  const LAND_FALLBACK_BBOX = { south: -0.905, north: -0.852, west: 131.235, east: 131.34 };
+
+  function pointOnLand(lat, lng) {
+    if (landClipGeojson) return pointInLandGeojson(lat, lng, landClipGeojson);
+    return (
+      lat >= LAND_FALLBACK_BBOX.south &&
+      lat <= LAND_FALLBACK_BBOX.north &&
+      lng >= LAND_FALLBACK_BBOX.west &&
+      lng <= LAND_FALLBACK_BBOX.east
+    );
+  }
+
+  function healthIconKind(props) {
+    const a = normalizeText(props.amenity);
+    const n = normalizeText(props.name);
+    if (a === "hospital") return "hospital";
+    if (a === "clinic" && (n.includes("puskesmas") || n.includes("pembantu"))) return "puskesmas";
+    if (a === "clinic" || a === "doctors") return "clinic";
+    if (a === "pharmacy") return "pharmacy";
+    if (a === "dentist") return "clinic";
+    return "clinic";
+  }
+
+  function makeAmenityIcon(cat, props) {
+    const size = 34;
+    const anchor = 17;
+    let inner = "";
+    if (cat === "police") {
+      inner = `<path fill="#1e40af" d="M17 2l4 6h6l-4 5 2 7-8-4-8 4 2-7-4-5h6z"/>`;
+    } else if (cat === "military") {
+      inner = `<path fill="#166534" d="M17 3l3.5 7 7.5 1-5.5 5.2 1.3 7.8L17 19.5 9.2 24.2l1.3-7.8L5 11l7.5-1z"/>`;
+    } else if (cat === "school") {
+      inner = `<path fill="#a16207" d="M8 12l9-5 9 5v10H8V12zm4 2h10v6H12v-6z"/>`;
+    } else if (cat === "higher") {
+      inner = `<path fill="#6d28d9" d="M17 8l10 4v2H7v-2l10-4zm-6 9h12v2H11v-2z"/>`;
+    } else if (cat === "worship") {
+      inner = `<path fill="#4338ca" d="M17 6l-6 7h3v8h6v-8h3l-6-7zm0 3.5L19 14h-4l2-4.5z"/>`;
+    } else if (cat === "health") {
+      const k = healthIconKind(props || {});
+      if (k === "hospital") {
+        inner = `<rect x="10" y="8" width="14" height="18" rx="2" fill="#b91c1c"/><path fill="#fff" d="M14 14h6v4h-6zM16 12h2v10h-2z"/>`;
+      } else if (k === "puskesmas") {
+        inner = `<rect x="9" y="10" width="16" height="14" rx="2" fill="#0d9488"/><circle cx="17" cy="7" r="3" fill="#fbbf24"/>`;
+      } else {
+        inner = `<rect x="11" y="9" width="12" height="15" rx="2" fill="#0f766e"/><path fill="#fff" d="M15 13h4v2h-4v-2zm1-3h2v8h-2z"/>`;
+      }
+    } else {
+      inner = `<circle cx="17" cy="17" r="8" fill="#64748b"/>`;
+    }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 34 34" class="amenity-marker-icon">` +
+      `<circle cx="17" cy="17" r="16" fill="#fff" stroke="rgba(15,23,42,0.25)" stroke-width="1.5"/>` +
+      inner +
+      `</svg>`;
     return L.divIcon({
-      className: "",
-      html: `<div style="width:26px;height:26px;border-radius:50%;background:${c};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;font-family:Teko,sans-serif">${label}</div>`,
-      iconSize: [26, 26], iconAnchor: [13, 13]
+      className: "amenity-marker-wrap",
+      html: `<div style="width:${size}px;height:${size}px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))">${svg}</div>`,
+      iconSize: [size, size],
+      iconAnchor: [anchor, anchor],
+      popupAnchor: [0, -anchor - 2]
     });
+  }
+
+  function buildDetailNarrative(rec) {
+    const p = rec.props || {};
+    const parts = [];
+    const cat = categoryLabel(rec.cat);
+    parts.push(
+      escHtml(rec.name) + " adalah " + cat.toLowerCase() + " di wilayah Sorong berdasarkan data OpenStreetMap."
+    );
+    const a = normalizeText(p.amenity);
+    if (a === "hospital") parts.push("Tipe fasilitas: rumah sakit — layanan rawat inap dan gawat darurat umumnya tersedia di lokasi sejenis.");
+    else if (a === "clinic" || a === "doctors") parts.push("Tipe fasilitas: klinik / layanan kesehatan primer — cocok untuk pemeriksaan ringan dan rujukan.");
+    else if (a === "school" || a === "kindergarten") parts.push("Tipe fasilitas: pendidikan dasar/menengah.");
+    else if (a === "university" || a === "college") parts.push("Tipe fasilitas: perguruan tinggi.");
+    else if (a === "place_of_worship") parts.push("Tipe fasilitas: tempat ibadah.");
+    else if (rec.cat === "police") parts.push("Tipe fasilitas: kepolisian.");
+    else if (rec.cat === "military") parts.push("Tipe fasilitas: pertahanan / instalasi TNI terkait.");
+    parts.push(
+      "Jam operasional, telepon, dan ulasan pengunjung biasanya tersedia di Google Maps — gunakan tautan di bawah untuk membuka lokasi yang sama di peta Google."
+    );
+    return parts.join(" ");
+  }
+
+  function buildPopupHtml(rec) {
+    const lat = rec.coords[0];
+    const lng = rec.coords[1];
+    const q = encodeURIComponent(rec.name + " Sorong Papua Barat Daya");
+    const gmaps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(lat + "," + lng);
+    const gsearch = "https://www.google.com/search?q=" + q;
+    const olink = osmLink(rec.props);
+    const osmBlock = olink
+      ? `<p style="margin-top:8px"><a class="pap-link" href="${olink}" target="_blank" rel="noopener noreferrer">OpenStreetMap</a></p>`
+      : "";
+    return (
+      `<div class="action-popup-inner">` +
+      `<div class="pap-title">${escHtml(rec.name)}</div>` +
+      `<div class="pap-sub">${escHtml(categoryLabel(rec.cat))}</div>` +
+      `<div class="pap-btns">` +
+      `<button type="button" class="pap-btn" data-pap="detail">Detail</button>` +
+      `<button type="button" class="pap-btn" data-pap="focus">Fokus</button>` +
+      `</div>` +
+      `<a class="pap-link" href="${gmaps}" target="_blank" rel="noopener noreferrer">Buka di Google Maps</a> · ` +
+      `<a class="pap-link" href="${gsearch}" target="_blank" rel="noopener noreferrer">Cari di Google</a>` +
+      `<div class="pap-detail" id="pap-detail-box">` +
+      `<p>${buildDetailNarrative(rec)}</p>` +
+      `<div class="pap-coords">Lintang: ${lat.toFixed(6)} &nbsp; Bujur: ${lng.toFixed(6)}</div>` +
+      osmBlock +
+      `</div>` +
+      `</div>`
+    );
+  }
+
+  function openAmenityPopup(rec) {
+    actionPopup.setLatLng(rec.coords).setContent(buildPopupHtml(rec)).openOn(map);
+    const el = actionPopup.getElement();
+    if (!el) return;
+    const detailBox = el.querySelector("#pap-detail-box");
+    el.querySelectorAll("[data-pap]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const act = btn.getAttribute("data-pap");
+        if (act === "focus") flyToSmooth(rec.coords, 18);
+        if (act === "detail" && detailBox) detailBox.classList.toggle("visible");
+      });
+    });
+  }
+
+  function openAmenityFromSearch(rec) {
+    flyToSmooth(rec.coords, 17);
+    if (rec.marker) {
+      amenityCluster.zoomToShowLayer(rec.marker, () => {
+        openAmenityPopup(rec);
+      });
+    } else {
+      openAmenityPopup(rec);
+    }
   }
 
   function getPlaceName(props, idx) {
@@ -655,34 +882,41 @@
   function buildSimulatedHeat(mode) {
     if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
     if (mode === "off") return;
-    const bbox = { south: -0.96, north: -0.78, west: 131.18, east: 131.43 };
-    const center = [-0.876, 131.265];
+    const n = mode === "pop" ? 240 : 180;
     const pts = [];
-    const n = mode === "pop" ? 220 : 160;
-    for (let i = 0; i < n; i++) {
-      let lat, lng, inten;
-      if (mode === "pop") {
-        const bx = bbox.south + Math.random() * (bbox.north - bbox.south);
-        const by = bbox.west + Math.random() * (bbox.east - bbox.west);
-        lat = center[0] + (bx - center[0]) * 0.55 + (Math.random() - 0.5) * 0.035;
-        lng = center[1] + (by - center[1]) * 0.55 + (Math.random() - 0.5) * 0.035;
-        inten = 0.12 + Math.random() * 0.88;
+    let guard = 0;
+    const urbanCenter = [-0.8765, 131.281];
+    while (pts.length < n && guard < n * 50) {
+      guard++;
+      let lat;
+      let lng;
+      let inten;
+      if (mode === "crime" && allRecords.length > 0 && Math.random() < 0.58) {
+        const pick = allRecords[Math.floor(Math.random() * allRecords.length)];
+        lat = pick.coords[0] + (Math.random() - 0.5) * 0.014;
+        lng = pick.coords[1] + (Math.random() - 0.5) * 0.014;
+        inten = 0.35 + Math.random() * 0.62;
       } else {
-        const hotspot = i % 9;
-        const hx = bbox.west + ((hotspot * 17) % 100) / 100 * (bbox.east - bbox.west);
-        const hy = bbox.south + ((hotspot * 31) % 100) / 100 * (bbox.north - bbox.south);
-        lat = hy + (Math.random() - 0.5) * 0.028;
-        lng = hx + (Math.random() - 0.5) * 0.028;
-        inten = 0.25 + Math.random() * 0.95;
+        const spread = mode === "pop" ? 0.055 : 0.048;
+        lat = urbanCenter[0] + (Math.random() + Math.random() + Math.random() - 1.5) * spread;
+        lng = urbanCenter[1] + (Math.random() + Math.random() + Math.random() - 1.5) * spread;
+        inten = mode === "pop"
+          ? 0.18 + Math.random() * 0.82
+          : 0.22 + Math.random() * 0.78;
       }
-      lat = Math.max(bbox.south, Math.min(bbox.north, lat));
-      lng = Math.max(bbox.west, Math.min(bbox.east, lng));
+      if (!pointOnLand(lat, lng)) continue;
       pts.push([lat, lng, inten]);
     }
     const grad = mode === "pop"
-      ? { 0.15: "#0ea5e9", 0.45: "#22c55e", 0.75: "#eab308", 1: "#ef4444" }
-      : { 0.2: "#fde047", 0.5: "#fb923c", 0.8: "#dc2626", 1: "#7f1d1d" };
-    heatLayer = L.heatLayer(pts, { radius: mode === "pop" ? 22 : 26, blur: 18, maxZoom: 17, max: 1.0, gradient: grad }).addTo(map);
+      ? { 0.12: "#0ea5e9", 0.35: "#22c55e", 0.62: "#eab308", 0.85: "#f97316", 1: "#b91c1c" }
+      : { 0.15: "#fef08a", 0.4: "#fb923c", 0.65: "#ea580c", 0.85: "#dc2626", 1: "#7f1d1d" };
+    heatLayer = L.heatLayer(pts, {
+      radius: mode === "pop" ? 20 : 24,
+      blur: 16,
+      maxZoom: 17,
+      max: 1.0,
+      gradient: grad
+    }).addTo(map);
   }
 
   document.getElementById("heat-mode").addEventListener("change", (e) => {
@@ -721,15 +955,6 @@
     return filterCats[fk];
   }
 
-  const actionPanel = document.getElementById("action-panel");
-  const actionTitle = document.getElementById("action-title");
-
-  function openActionPanel(rec) {
-    selectedPlace = rec;
-    actionTitle.textContent = rec.name;
-    actionPanel.style.display = "block";
-  }
-
   function renderFromData() {
     amenityCluster.clearLayers();
     buildingLayer.clearLayers();
@@ -747,22 +972,14 @@
       if (!cat || !ll) return;
       if (!passesAmenityFilter(cat)) return;
       const name = getPlaceName(p, idx);
-      const rec = { name, cat, address: getPlaceAddress(p), coords: ll, props: p, feature: f };
+      const rid = p.osm_id != null ? String(p.osm_id) : "idx-" + idx;
+      const rec = { id: rid, name, cat, address: getPlaceAddress(p), coords: ll, props: p, feature: f };
       allRecords.push(rec);
-      const marker = L.marker(ll, { icon: makeIcon(cat) });
-      const olink = osmLink(p);
-      const extraHealth =
-        cat === "health"
-          ? `<div class="info-row"><span>Beban pasien (simulasi)</span><span>${patientLoadBand(p) === "high" ? "Tinggi" : "Rendah"}</span></div>`
-          : "";
-      marker.bindPopup(
-        `<div style="min-width:200px;font-size:12px;">` +
-        `<strong>${name}</strong><br/><span style="color:#94a3b8">${categoryLabel(cat)}</span>` +
-        `<div style="margin-top:6px;">${rec.address}</div>${extraHealth}` +
-        (olink ? `<div style="margin-top:8px"><a href="${olink}" target="_blank" rel="noopener">OSM</a></div>` : "") +
-        `</div>`
-      );
-      marker.on("click", () => openActionPanel(rec));
+      const marker = L.marker(ll, { icon: makeAmenityIcon(cat, p) });
+      marker.on("click", () => {
+        flyToSmooth(rec.coords, 17);
+        openAmenityPopup(rec);
+      });
       rec.marker = marker;
       amenityCluster.addLayer(marker);
     });
@@ -804,13 +1021,56 @@
     renderFromData();
   });
 
+  async function fetchAdminBoundaryGeojson() {
+    const queries = [
+      "Kota Sorong, Papua Barat Daya, Indonesia",
+      "Sorong, West Papua, Indonesia"
+    ];
+    for (const q of queries) {
+      try {
+        const nom =
+          "https://nominatim.openstreetmap.org/search?format=json&polygon_geojson=1&limit=1&q=" +
+          encodeURIComponent(q);
+        const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(nom);
+        const res = await fetch(proxyUrl);
+        if (!res.ok) continue;
+        const wrapped = await res.json();
+        const arr = JSON.parse(wrapped.contents);
+        if (Array.isArray(arr) && arr[0] && arr[0].geojson) return arr[0].geojson;
+      } catch (_) {}
+    }
+    return null;
+  }
+
   async function loadBoundary() {
+    boundaryLayer.clearLayers();
+    landClipGeojson = null;
+    const gj = await fetchAdminBoundaryGeojson();
+    if (gj) {
+      landClipGeojson = gj;
+      boundaryLayer.addData({
+        type: "Feature",
+        properties: { source: "OpenStreetMap (Nominatim)", note: "Referensi batas administratif seperti di layanan peta umum" },
+        geometry: gj
+      });
+      return;
+    }
     const r = await fetch("data/clipping_boundary.geojson");
     if (!r.ok) return;
     const raw = await r.json();
     const geom = raw.type === "FeatureCollection" ? raw : { type: "Feature", properties: {}, geometry: raw };
-    boundaryLayer.clearLayers();
+    if (geom.type === "Feature" && geom.geometry) landClipGeojson = geom.geometry;
+    else if (geom.type === "FeatureCollection" && geom.features && geom.features[0]) {
+      landClipGeojson = geom.features[0].geometry || null;
+    }
     boundaryLayer.addData(geom);
+    boundaryLayer.setStyle({
+      color: "#94a3b8",
+      dashArray: "8 6",
+      weight: 2,
+      fillOpacity: 0.04,
+      fillColor: "#64748b"
+    });
   }
 
   async function loadMainGeojson() {
@@ -822,9 +1082,9 @@
     renderFromData();
     const group = L.featureGroup([amenityCluster, buildingLayer, boundaryLayer]);
     try {
-      map.fitBounds(group.getBounds(), { padding: [24, 24] });
+      map.flyToBounds(group.getBounds(), { padding: [24, 24], duration: 1.0, easeLinearity: 0.2 });
     } catch (_) {
-      map.setView([-0.87, 131.27], 12);
+      map.flyTo([-0.87, 131.27], 12, { duration: 0.9 });
     }
   }
 
@@ -834,37 +1094,53 @@
     return allRecords
       .filter((r) => normalizeText(r.name).includes(qq))
       .slice(0, 10)
-      .map((r) => ({ name: r.name, category: categoryLabel(r.cat), lat: r.coords[0], lng: r.coords[1], rec: r }));
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        category: categoryLabel(r.cat),
+        lat: r.coords[0],
+        lng: r.coords[1],
+        rec: r
+      }));
   }
 
   const searchInput = document.getElementById("search-input");
   const sugg = document.getElementById("search-suggestions");
   let deb;
+  const searchWrap = document.getElementById("search-wrap");
+  const searchClear = document.getElementById("search-clear");
+
+  function syncSearchClearVis() {
+    const has = searchInput.value.length > 0;
+    searchWrap.classList.toggle("has-text", has);
+  }
+
+  searchClear.addEventListener("click", () => {
+    searchInput.value = "";
+    syncSearchClearVis();
+    sugg.classList.remove("visible");
+    searchInput.focus();
+  });
+
   searchInput.addEventListener("input", () => {
+    syncSearchClearVis();
     clearTimeout(deb);
     const v = searchInput.value.trim();
     if (v.length < 2) { sugg.classList.remove("visible"); return; }
     deb = setTimeout(() => {
       const items = searchLocal(v);
       sugg.innerHTML = items.length
-        ? items.map((it) => {
-            const esc = it.name.replace(/"/g, "&quot;");
-            return `<div class="sugg-item" data-name="${esc}" data-lat="${it.lat}" data-lng="${it.lng}"><strong>${it.name}</strong><br/><small>${it.category}</small></div>`;
-          }).join("")
+        ? items.map((it) => (
+              `<div class="sugg-item" data-id="${escHtml(it.id)}" data-lat="${it.lat}" data-lng="${it.lng}">` +
+              `<strong>${escHtml(it.name)}</strong><br/><small>${escHtml(it.category)}</small></div>`
+            )).join("")
         : `<div class="sugg-item">Tidak ada hasil</div>`;
       sugg.querySelectorAll(".sugg-item").forEach((el) => {
-        if (!el.dataset.name) return;
+        if (!el.dataset.id) return;
         el.addEventListener("mousedown", (ev) => {
           ev.preventDefault();
-          const lat = parseFloat(el.dataset.lat);
-          const lng = parseFloat(el.dataset.lng);
-          const nm = el.dataset.name;
-          map.setView([lat, lng], 17);
-          const hit = allRecords.find((r) => r.name === nm);
-          if (hit && hit.marker) {
-            amenityCluster.zoomToShowLayer(hit.marker, () => hit.marker.openPopup());
-            openActionPanel(hit);
-          }
+          const hit = allRecords.find((r) => r.id === el.dataset.id);
+          if (hit) openAmenityFromSearch(hit);
           sugg.classList.remove("visible");
         });
       });
@@ -874,7 +1150,7 @@
   document.getElementById("search-btn").addEventListener("click", () => {
     const items = searchLocal(searchInput.value);
     sugg.classList.remove("visible");
-    if (items[0]) map.setView([items[0].lat, items[0].lng], 16);
+    if (items[0]) openAmenityFromSearch(items[0].rec);
   });
 
   map.on("mousemove", (e) => {
@@ -926,47 +1202,16 @@
         if (!userMarker) userMarker = L.circleMarker(currentLocation, { radius: 8, color: "#f59e0b", fillColor: "#f59e0b", fillOpacity: 0.9 }).addTo(map);
         else userMarker.setLatLng(currentLocation);
         userMarker.bindPopup("Posisi Anda").openPopup();
-        map.flyTo(currentLocation, 14);
+        map.flyTo(currentLocation, 14, { duration: 1.1, easeLinearity: 0.22 });
       },
       () => showError("Gagal GPS — izinkan lokasi."),
       { enableHighAccuracy: true, timeout: 12000 }
     );
   });
 
-  function clearRoute() {
-    if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
-  }
-  document.getElementById("btn-cancel-route").addEventListener("click", clearRoute);
-  document.getElementById("btn-detail").addEventListener("click", () => {
-    if (selectedPlace && selectedPlace.marker) selectedPlace.marker.openPopup();
-  });
-  document.getElementById("btn-focus").addEventListener("click", () => {
-    if (selectedPlace) map.flyTo(selectedPlace.coords, 17);
-  });
-  document.getElementById("btn-route").addEventListener("click", async () => {
-    if (!selectedPlace) return;
-    if (!currentLocation) { showError("Aktifkan GPS terlebih dahulu."); return; }
-    const [lat1, lon1] = currentLocation;
-    const [lat2, lon2] = selectedPlace.coords;
-    const mode = document.getElementById("route-mode").value;
-    clearRoute();
-    try {
-      const profile = mode === "walking" ? "foot" : "driving";
-      const url = `https://router.project-osrm.org/route/v1/${profile}/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
-      const res = await fetch(url);
-      const json = await res.json();
-      if (!json.routes || !json.routes[0]) throw new Error("empty");
-      const c = json.routes[0].geometry.coordinates.map((x) => [x[1], x[0]]);
-      routeLine = L.polyline(c, { color: "#f59e0b", weight: 5 }).addTo(map);
-      map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
-    } catch (_) {
-      window.open(`https://www.google.com/maps/dir/?api=1&origin=${lat1},${lon1}&destination=${lat2},${lon2}&travelmode=driving`, "_blank");
-    }
-  });
-
   document.getElementById("fab-fit").addEventListener("click", () => {
     const g = L.featureGroup([amenityCluster, buildingLayer, boundaryLayer]);
-    try { map.fitBounds(g.getBounds(), { padding: [30, 30] }); } catch (_) {}
+    try { map.flyToBounds(g.getBounds(), { padding: [30, 30], duration: 0.95, easeLinearity: 0.2 }); } catch (_) {}
   });
   document.getElementById("fab-full").addEventListener("click", () => {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen();
@@ -1014,6 +1259,7 @@
 
       await loadMainGeojson();
       syncLayerVisibility();
+      syncSearchClearVis();
 
       document.getElementById("loading").classList.add("hidden");
       updateMusicButton();
