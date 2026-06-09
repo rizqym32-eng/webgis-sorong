@@ -1,0 +1,7 @@
+# Sorong City WebGIS – Public Facilities Mapping
+
+Sorong City WebGIS is a web-based geographic information system project designed to visualize the distribution of public facilities in Sorong City. This project presents several facility categories, including police posts, military posts, worship places, educational facilities, and healthcare facilities. The main objective of this project is to transform spatial data into an interactive and accessible map-based information system that can help users understand the location and distribution of public service facilities more easily.
+
+This project uses GeoJSON spatial data as the main data format and implements interactive map layers to display different types of facilities. Through this project, I applied information systems concepts, spatial data management, data visualization, and web-based mapping principles. The project also reflects how structured data can be presented in a more meaningful way to support information access, public facility analysis, and location-based decision-making.
+
+From an academic perspective, this WebGIS project helped me develop practical skills in organizing spatial datasets, managing map layers, presenting geographic information, and building a simple web-based information system. It also strengthened my understanding of how data, technology, and visualization can be combined to support public service information and improve the way users interact with location-based data.
